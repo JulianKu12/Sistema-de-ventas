@@ -10,6 +10,7 @@
   --color-muted: #8e8e93;
   --color-accent: #007aff;
   --color-danger: #ff3b30;
+  --color-warning: #ff9500;
 
   --shadow-card: 0 8px 24px rgb(0 0 0 / 0.06), 0 2px 8px rgb(0 0 0 / 0.04);
 }

@@ -31,4 +31,6 @@ async function peticion(path, { method = 'GET', body } = {}) {
 export const api = {
   get: (path) => peticion(path),
   post: (path, body) => peticion(path, { method: 'POST', body }),
+  patch: (path, body) => peticion(path, { method: 'PATCH', body }),
+  del: (path) => peticion(path, { method: 'DELETE' }),
 }

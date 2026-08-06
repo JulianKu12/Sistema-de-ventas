@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/useAuth'
-import { listarCombos, listarIngredientes, listarProductos } from '../services/catalogo'
+import { listarCombos, listarProductos } from '../services/catalogo'
+import { listarIngredientes } from '../services/ingredientes'
 import { abrirCaja, obtenerEstadoCaja } from '../services/caja'
 import { crearVenta } from '../services/ventas'
 import Button from '../components/ui/Button'
@@ -34,7 +35,7 @@ function ProductoCard({ nombre, precio, sub, esCombo, onClick, deshabilitado }) 
 }
 
 function PuntoVentaPage() {
-  const { usuario, logout } = useAuth()
+  const { logout } = useAuth()
 
   const [productos, setProductos] = useState([])
   const [combos, setCombos] = useState([])
@@ -249,28 +250,22 @@ function PuntoVentaPage() {
   }
 
   return (
-    <main className="flex h-screen flex-col overflow-hidden">
+    <main className="flex h-full flex-col overflow-hidden">
       <header className="flex items-center justify-between gap-4 border-b border-black/5 bg-card px-6 py-4">
         <h1 className="text-2xl font-bold text-ink">Punto de Venta</h1>
-        <div className="flex items-center gap-4">
-          <div
-            className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
-              cargandoCaja
-                ? 'bg-muted/10 text-muted'
-                : caja.abierta
-                  ? 'bg-accent/10 text-accent'
-                  : 'bg-danger/10 text-danger'
-            }`}
-          >
-            <span
-              className={`h-2.5 w-2.5 rounded-full ${caja.abierta ? 'bg-accent' : 'bg-danger'}`}
-            />
-            {cargandoCaja ? 'Verificando caja…' : caja.abierta ? 'Caja abierta' : 'Caja cerrada'}
-          </div>
-          <span className="hidden text-sm text-muted sm:block">{usuario?.nombre}</span>
-          <Button variant="secondary" size="md" onClick={logout}>
-            Cerrar sesión
-          </Button>
+        <div
+          className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
+            cargandoCaja
+              ? 'bg-muted/10 text-muted'
+              : caja.abierta
+                ? 'bg-accent/10 text-accent'
+                : 'bg-danger/10 text-danger'
+          }`}
+        >
+          <span
+            className={`h-2.5 w-2.5 rounded-full ${caja.abierta ? 'bg-accent' : 'bg-danger'}`}
+          />
+          {cargandoCaja ? 'Verificando caja…' : caja.abierta ? 'Caja abierta' : 'Caja cerrada'}
         </div>
       </header>
 

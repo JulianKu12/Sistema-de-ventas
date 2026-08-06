@@ -7,7 +7,3 @@ export async function listarProductos() {
 export async function listarCombos() {
   return api.get('/api/combos')
 }
-
-export async function listarIngredientes() {
-  return api.get('/api/ingredientes')
-}

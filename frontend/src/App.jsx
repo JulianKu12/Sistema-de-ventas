@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/useAuth'
+import AppShell from './components/layout/AppShell'
 import LoginPage from './pages/LoginPage'
 import PuntoVentaPage from './pages/PuntoVentaPage'
+import IngredientesPage from './pages/IngredientesPage'
 
 function RutaProtegida({ children }) {
   const { token } = useAuth()
@@ -17,10 +19,13 @@ function App() {
         path="/"
         element={
           <RutaProtegida>
-            <PuntoVentaPage />
+            <AppShell />
           </RutaProtegida>
         }
-      />
+      >
+        <Route index element={<PuntoVentaPage />} />
+        <Route path="ingredientes" element={<IngredientesPage />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

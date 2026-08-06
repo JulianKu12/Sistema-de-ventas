@@ -6,6 +6,10 @@ const variantes = {
     'bg-accent text-white shadow-[0_4px_14px_rgb(0_122_255/0.35)] active:bg-accent/85',
   secondary:
     'bg-card text-accent shadow-card active:bg-muted/10',
+  danger:
+    'bg-danger text-white shadow-[0_4px_14px_rgb(255_59_48/0.3)] active:bg-danger/85',
+  dangerSoft:
+    'bg-danger/10 text-danger active:bg-danger/20',
 }
 
 const tamanos = {
