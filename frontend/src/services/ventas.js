@@ -8,3 +8,7 @@ export async function listarVentas(params = {}) {
   const query = new URLSearchParams(params).toString()
   return api.get(`/api/ventas${query ? `?${query}` : ''}`)
 }
+
+export async function reporteNoCobrar() {
+  return api.get('/api/ventas/no-cobrar')
+}

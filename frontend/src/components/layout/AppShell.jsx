@@ -84,8 +84,16 @@ function IconoRepartidor() {
 function IconoConfig() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
-      <path d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.512.966.231 1.44l-.4.61c-.225.43-.111.95.227 1.3.34.351.849.383 1.136.084l.384-.399a1.125 1.125 0 0 1 1.422-.109l1.018.686c.42.282.611.8.41 1.313l-.287.755c-.188.47-.611.86-1.11.86h-1.07c-.56 0-1.03.398-1.12.94-.09.542.06 1.085.02 1.29-.4 2.398-1.21 4.917-2.92 6.66" />
-      <path d="M11 6a5.25 5.25 0 1 0 5.25 5.25H14A3 3 0 0 1 11 8.25V6Z" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.02a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.02a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.02a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+    </svg>
+  )
+}
+
+function IconoReporte() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
     </svg>
   )
 }
@@ -100,6 +108,7 @@ const items = [
   { to: '/devoluciones', etiqueta: 'Devoluciones', icono: <IconoDevolucion /> },
   { to: '/gastos', etiqueta: 'Gastos', icono: <IconoGasto /> },
   { to: '/caja', etiqueta: 'Caja', icono: <IconoCaja /> },
+  { to: '/reportes', etiqueta: 'Reportes', icono: <IconoReporte /> },
   { to: '/repartidores', etiqueta: 'Repartidores', icono: <IconoRepartidor /> },
   { to: '/configuracion', etiqueta: 'Configuración', icono: <IconoConfig /> },
 ]
