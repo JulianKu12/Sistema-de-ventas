@@ -9,28 +9,39 @@ import Input from '../components/ui/Input'
 import Carrito from '../components/pos/Carrito'
 import AbrirCajaModal from '../components/pos/AbrirCajaModal'
 import ModificadorModal from '../components/pos/ModificadorModal'
+import MitadYMitadModal from '../components/pos/MitadYMitadModal'
 import StockAlertaModal from '../components/pos/StockAlertaModal'
 import { formatearPrecio } from '../utils/formato'
 
-function ProductoCard({ nombre, precio, sub, esCombo, onClick, deshabilitado }) {
+function ProductoCard({ nombre, precio, sub, esCombo, onClick, onMitad }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={deshabilitado}
-      className="flex min-h-[120px] flex-col justify-between gap-2 rounded-2xl bg-card p-4 text-left shadow-card transition active:scale-[0.96] disabled:opacity-50"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <span className="line-clamp-2 font-semibold text-ink">{nombre}</span>
-        {esCombo && (
-          <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
-            Combo
-          </span>
-        )}
-      </div>
-      <span className="text-lg font-bold text-accent">{formatearPrecio(precio)}</span>
-      {sub && <span className="text-xs text-muted">{sub}</span>}
-    </button>
+    <div className="flex min-h-[120px] flex-col rounded-2xl bg-card shadow-card">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex flex-1 flex-col justify-between gap-2 rounded-2xl p-4 text-left transition active:scale-[0.97] disabled:opacity-50"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <span className="line-clamp-2 font-semibold text-ink">{nombre}</span>
+          {esCombo && (
+            <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+              Combo
+            </span>
+          )}
+        </div>
+        <span className="text-lg font-bold text-accent">{formatearPrecio(precio)}</span>
+        {sub && <span className="text-xs text-muted">{sub}</span>}
+      </button>
+      {onMitad && (
+        <button
+          type="button"
+          onClick={onMitad}
+          className="mx-2 mb-2 flex items-center justify-center gap-1 rounded-xl bg-accent/10 px-3 py-2 text-xs font-semibold text-accent transition active:scale-[0.97] active:bg-accent/20"
+        >
+          <span className="text-sm font-bold">½</span> Mitad y mitad
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -50,6 +61,7 @@ function PuntoVentaPage() {
   const [buscar, setBuscar] = useState('')
 
   const [modProducto, setModProducto] = useState(null)
+  const [mitadProducto, setMitadProducto] = useState(null)
   const [abrirCajaModal, setAbrirCajaModal] = useState(false)
   const [abriendoCaja, setAbriendoCaja] = useState(false)
   const [stockModal, setStockModal] = useState(null)
@@ -177,6 +189,29 @@ function PuntoVentaPage() {
     setModProducto(null)
   }
 
+  const confirmarMitad = ({ sabor1ProductoId, sabor2ProductoId, subnombre }) => {
+    agregarAlCarrito({
+      key: `m${mitadProducto.id}-${sabor1ProductoId}-${sabor2ProductoId}`,
+      tipo: 'producto',
+      id: mitadProducto.id,
+      nombre: mitadProducto.nombre,
+      subnombre,
+      precioUnitario: mitadProducto.precio,
+      cantidad: 1,
+      modificadores: [],
+      esMitadYMitad: true,
+      sabor1ProductoId,
+      sabor2ProductoId,
+      esCombo: false,
+    })
+    setMitadProducto(null)
+  }
+
+  const saboresMitad = useMemo(
+    () => productos.filter((p) => p.tipo === 'Con_receta' && p.estado === 'Activo' && p.disponibleHoy),
+    [productos],
+  )
+
   const incrementar = (key) =>
     setCarrito((previo) => previo.map((i) => (i.key === key ? { ...i, cantidad: i.cantidad + 1 } : i)))
   const decrementar = (key) =>
@@ -189,11 +224,19 @@ function PuntoVentaPage() {
     productos: carrito.map((item) =>
       item.tipo === 'combo'
         ? { comboId: item.id, cantidad: item.cantidad }
-        : {
-            productoId: item.id,
-            cantidad: item.cantidad,
-            modificadores: item.modificadores.map((m) => ({ modificadorId: m.modificadorId })),
-          },
+        : item.esMitadYMitad
+          ? {
+              productoId: item.id,
+              cantidad: item.cantidad,
+              esMitadYMitad: true,
+              sabor1ProductoId: item.sabor1ProductoId,
+              sabor2ProductoId: item.sabor2ProductoId,
+            }
+          : {
+              productoId: item.id,
+              cantidad: item.cantidad,
+              modificadores: item.modificadores.map((m) => ({ modificadorId: m.modificadorId })),
+            },
     ),
     metodoPago,
     noCobrar,
@@ -354,13 +397,12 @@ function PuntoVentaPage() {
                         nombre={producto.nombre}
                         precio={producto.precio}
                         sub={
-                          producto.productoModificadores?.length > 0
+                          producto.productoModificadores?.length > 0 && !producto.permiteMitadYMitad
                             ? 'Con opciones'
-                            : producto.permiteMitadYMitad
-                              ? 'Mitad y mitad'
-                              : undefined
+                            : undefined
                         }
                         onClick={() => manejarClickProducto(producto)}
+                        onMitad={producto.permiteMitadYMitad ? () => setMitadProducto(producto) : undefined}
                       />
                     ))}
                   </div>
@@ -398,6 +440,14 @@ function PuntoVentaPage() {
           onConfirm={confirmarModificadores}
         />
       )}
+
+      <MitadYMitadModal
+        open={mitadProducto !== null}
+        producto={mitadProducto}
+        sabores={saboresMitad}
+        onClose={() => setMitadProducto(null)}
+        onConfirm={confirmarMitad}
+      />
 
       <StockAlertaModal
         open={stockModal !== null}

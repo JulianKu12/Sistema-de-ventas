@@ -42,7 +42,15 @@ function ItemCarrito({ item, onIncrement, onDecrement, onRemove }) {
                 Combo
               </span>
             )}
+            {item.esMitadYMitad && (
+              <span className="ml-2 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+                ½
+              </span>
+            )}
           </p>
+          {item.subnombre && (
+            <p className="mt-0.5 text-xs font-medium text-ink">{item.subnombre}</p>
+          )}
           {item.modificadores.length > 0 && (
             <p className="mt-0.5 text-xs text-muted">
               {item.modificadores.map((m) => m.nombre).join(' · ')}
