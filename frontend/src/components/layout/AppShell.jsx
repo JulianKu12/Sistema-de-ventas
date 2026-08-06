@@ -233,10 +233,10 @@ function AppShell() {
               strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`h-3.5 w-3.5 text-white transition-transform duration-200 ${abierto ? '-rotate-90' : 'rotate-90'}`}
+              className={`h-3.5 w-3.5 text-white transition-transform duration-200 ${abierto ? 'rotate-0' : 'rotate-180'}`}
               aria-hidden="true"
             >
-              <path d="M4.5 12h15M13 5.5l6.5 6.5L13 18.5" />
+              <path d="M14.25 5.25 7.5 12l6.75 6.75" />
             </svg>
           </span>
         </button>
