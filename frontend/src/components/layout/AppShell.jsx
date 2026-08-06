@@ -44,7 +44,7 @@ function IconoCombo() {
 const items = [
   { to: '/', end: true, etiqueta: 'Punto de Venta', icono: <IconoVenta /> },
   { to: '/ingredientes', etiqueta: 'Ingredientes', icono: <IconoIngrediente /> },
-  { to: '/productos', etiqueta: 'Productos', icono: <IconoProducto />, deshabilitado: true },
+  { to: '/productos', etiqueta: 'Productos', icono: <IconoProducto /> },
   { to: '/modificadores', etiqueta: 'Modificadores', icono: <IconoModificador />, deshabilitado: true },
   { to: '/combos', etiqueta: 'Combos', icono: <IconoCombo />, deshabilitado: true },
 ]
