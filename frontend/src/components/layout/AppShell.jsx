@@ -41,10 +41,26 @@ function IconoGasto() {
   )
 }
 
+function IconoCaja() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <path d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+  )
+}
+
 function IconoInventario() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
       <path d="m7.5 4.27 9 5.15M3 9.42l9 5.15 9-5.15M12 21.72v-7.15M7.5 4.27 3 9.42v8.66a2 2 0 0 0 1 1.73l3.5 2M16.5 4.27 21 9.42v8.66a2 2 0 0 1-1 1.73l-3.5 2" />
+    </svg>
+  )
+}
+
+function IconoDevolucion() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
     </svg>
   )
 }
@@ -55,7 +71,9 @@ const items = [
   { to: '/inventario', etiqueta: 'Inventario', icono: <IconoInventario /> },
   { to: '/productos', etiqueta: 'Productos', icono: <IconoProducto /> },
   { to: '/combos', etiqueta: 'Combos', icono: <IconoCombo /> },
+  { to: '/devoluciones', etiqueta: 'Devoluciones', icono: <IconoDevolucion /> },
   { to: '/gastos', etiqueta: 'Gastos', icono: <IconoGasto /> },
+  { to: '/caja', etiqueta: 'Caja', icono: <IconoCaja /> },
 ]
 
 function AppShell() {
