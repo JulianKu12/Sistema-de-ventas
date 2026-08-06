@@ -25,7 +25,7 @@ function Modal({ open, onClose, title, children, footer, className = '' }) {
       >
         {title && <h2 className="mb-4 text-xl font-bold text-ink">{title}</h2>}
         {children}
-        {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}
+        {footer && <div className="mt-6 flex flex-wrap justify-end gap-3">{footer}</div>}
       </div>
     </div>
   )
