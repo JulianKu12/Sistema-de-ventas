@@ -33,9 +33,18 @@ function IconoCombo() {
   )
 }
 
+function IconoInventario() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <path d="m7.5 4.27 9 5.15M3 9.42l9 5.15 9-5.15M12 21.72v-7.15M7.5 4.27 3 9.42v8.66a2 2 0 0 0 1 1.73l3.5 2M16.5 4.27 21 9.42v8.66a2 2 0 0 1-1 1.73l-3.5 2" />
+    </svg>
+  )
+}
+
 const items = [
   { to: '/', end: true, etiqueta: 'Punto de Venta', icono: <IconoVenta /> },
   { to: '/ingredientes', etiqueta: 'Ingredientes', icono: <IconoIngrediente /> },
+  { to: '/inventario', etiqueta: 'Inventario', icono: <IconoInventario /> },
   { to: '/productos', etiqueta: 'Productos', icono: <IconoProducto /> },
   { to: '/combos', etiqueta: 'Combos', icono: <IconoCombo /> },
 ]

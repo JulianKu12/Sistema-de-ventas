@@ -4,6 +4,7 @@ import AppShell from './components/layout/AppShell'
 import LoginPage from './pages/LoginPage'
 import PuntoVentaPage from './pages/PuntoVentaPage'
 import IngredientesPage from './pages/IngredientesPage'
+import InventarioPage from './pages/InventarioPage'
 import ProductosPage from './pages/ProductosPage'
 import CombosPage from './pages/CombosPage'
 
@@ -27,6 +28,7 @@ function App() {
       >
         <Route index element={<PuntoVentaPage />} />
         <Route path="ingredientes" element={<IngredientesPage />} />
+        <Route path="inventario" element={<InventarioPage />} />
         <Route path="productos" element={<ProductosPage />} />
         <Route path="combos" element={<CombosPage />} />
       </Route>
