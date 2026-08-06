@@ -104,6 +104,13 @@ async function productosDesdePedido(tx, pedido) {
       cantidad: g.filas[0].cantidad / cpCant,
       precioCongelado: g.comboPrecioCongelado ?? combo.precioEspecial,
       pedidoProductos: g.filas.map((f) => ({ productoId: f.productoId, pedidoProductoId: f.id })),
+      productos: g.filas.map((f) => ({
+        productoId: f.productoId,
+        modificadores: f.modificadores.map((m) => ({
+          modificadorId: m.modificadorId,
+          costoAplicado: m.costoAplicado,
+        })),
+      })),
     })
   }
 
@@ -240,6 +247,11 @@ export const crearPedido = asyncHandler(async (req, res) => {
               comboPrecioCongelado: it.comboPrecioCongelado,
             },
           })
+          for (const m of dp.modificadores ?? []) {
+            await tx.pedido_Producto_Modificador.create({
+              data: { pedidoProductoId: pp.id, modificadorId: m.modificadorId, costoAplicado: m.costoAplicado },
+            })
+          }
           filas.push({ productoId: dp.productoId, pedidoProductoId: pp.id })
         }
         itemsVenta.push({
@@ -247,6 +259,13 @@ export const crearPedido = asyncHandler(async (req, res) => {
           cantidad: it.cantidad,
           precioCongelado: it.comboPrecioCongelado,
           pedidoProductos: filas,
+          productos: it.detalleProductos.map((dp) => ({
+            productoId: dp.productoId,
+            modificadores: (dp.modificadores ?? []).map((m) => ({
+              modificadorId: m.modificadorId,
+              costoAplicado: m.costoAplicado,
+            })),
+          })),
         })
       } else {
         const d = it.detalle

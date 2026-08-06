@@ -13,6 +13,7 @@ import ProductoCard from '../components/pos/ProductoCard'
 import AbrirCajaModal from '../components/pos/AbrirCajaModal'
 import ModificadorModal from '../components/pos/ModificadorModal'
 import MitadYMitadModal from '../components/pos/MitadYMitadModal'
+import ComboModal from '../components/pos/ComboModal'
 import StockAlertaModal from '../components/pos/StockAlertaModal'
 
 function PuntoVentaPage() {
@@ -33,6 +34,7 @@ function PuntoVentaPage() {
 
   const [modProducto, setModProducto] = useState(null)
   const [mitadProducto, setMitadProducto] = useState(null)
+  const [comboModal, setComboModal] = useState(null)
   const [abrirCajaModal, setAbrirCajaModal] = useState(false)
   const [abriendoCaja, setAbriendoCaja] = useState(false)
   const [stockModal, setStockModal] = useState(null)
@@ -142,6 +144,13 @@ function PuntoVentaPage() {
   }
 
   const manejarClickCombo = (combo) => {
+    const conOpciones = (combo.productos ?? []).some(
+      (cp) => (cp.producto?.productoModificadores?.length ?? 0) > 0,
+    )
+    if (conOpciones) {
+      setComboModal(combo)
+      return
+    }
     agregarAlCarrito({
       key: `c${combo.id}`,
       tipo: 'combo',
@@ -151,7 +160,13 @@ function PuntoVentaPage() {
       cantidad: 1,
       modificadores: [],
       esCombo: true,
+      productos: [],
     })
+  }
+
+  const confirmarCombo = (item) => {
+    agregarAlCarrito(item)
+    setComboModal(null)
   }
 
   const confirmarModificadores = (modificadores) => {
@@ -205,7 +220,18 @@ function PuntoVentaPage() {
     origen: 'Mostrador',
     productos: carrito.map((item) =>
       item.tipo === 'combo'
-        ? { comboId: item.id, cantidad: item.cantidad }
+        ? {
+            comboId: item.id,
+            cantidad: item.cantidad,
+            ...(item.productos?.some((p) => p.modificadores?.length > 0)
+              ? {
+                  productos: item.productos.map((p) => ({
+                    productoId: p.productoId,
+                    modificadores: p.modificadores.map((m) => ({ modificadorId: m.modificadorId })),
+                  })),
+                }
+              : {}),
+          }
         : item.esMitadYMitad
           ? {
               productoId: item.id,
@@ -440,6 +466,8 @@ function PuntoVentaPage() {
         onClose={() => setMitadProducto(null)}
         onConfirm={confirmarMitad}
       />
+
+      <ComboModal open={comboModal !== null} combo={comboModal ?? { productos: [] }} onClose={() => setComboModal(null)} onConfirm={confirmarCombo} />
 
       <StockAlertaModal
         open={stockModal !== null}

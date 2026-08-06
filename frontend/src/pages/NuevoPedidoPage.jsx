@@ -11,6 +11,7 @@ import Input from '../components/ui/Input'
 import ProductoCard from '../components/pos/ProductoCard'
 import ModificadorModal from '../components/pos/ModificadorModal'
 import MitadYMitadModal from '../components/pos/MitadYMitadModal'
+import ComboModal from '../components/pos/ComboModal'
 import StockAlertaModal from '../components/pos/StockAlertaModal'
 import { formatearPrecio } from '../utils/formato'
 
@@ -29,6 +30,14 @@ function FilaItem({ it, onCambiar, onQuitar }) {
         {it.subnombre && <p className="text-xs font-medium text-ink">{it.subnombre}</p>}
         {it.modificadores.length > 0 && (
           <p className="text-xs text-muted">{it.modificadores.map((m) => m.nombre).join(' · ')}</p>
+        )}
+        {it.esCombo && it.productos?.some((p) => p.modificadores?.length > 0) && (
+          <p className="text-xs text-muted">
+            {it.productos
+              .filter((p) => p.modificadores?.length > 0)
+              .map((p) => `${p.nombre}: ${p.modificadores.map((m) => m.nombre).join(', ')}`)
+              .join(' · ')}
+          </p>
         )}
         <p className="text-xs text-muted">{formatearPrecio(it.precioUnitario)} c/u</p>
       </div>
@@ -73,6 +82,7 @@ function NuevoPedidoPage() {
 
   const [modProducto, setModProducto] = useState(null)
   const [mitadProducto, setMitadProducto] = useState(null)
+  const [comboModal, setComboModal] = useState(null)
   const [stockModal, setStockModal] = useState(null)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
@@ -171,7 +181,19 @@ function NuevoPedidoPage() {
   }
 
   const manejarClickCombo = (combo) => {
-    agregarAlCarrito({ key: `c${combo.id}`, tipo: 'combo', id: combo.id, nombre: combo.nombre, precioUnitario: combo.precioEspecial, cantidad: 1, modificadores: [], esCombo: true })
+    const conOpciones = (combo.productos ?? []).some(
+      (cp) => (cp.producto?.productoModificadores?.length ?? 0) > 0,
+    )
+    if (conOpciones) {
+      setComboModal(combo)
+      return
+    }
+    agregarAlCarrito({ key: `c${combo.id}`, tipo: 'combo', id: combo.id, nombre: combo.nombre, precioUnitario: combo.precioEspecial, cantidad: 1, modificadores: [], esCombo: true, productos: [] })
+  }
+
+  const confirmarCombo = (item) => {
+    agregarAlCarrito(item)
+    setComboModal(null)
   }
 
   const confirmarModificadores = (modificadores) => {
@@ -196,7 +218,18 @@ function NuevoPedidoPage() {
     origen: 'Mostrador',
     productos: carrito.map((item) =>
       item.tipo === 'combo'
-        ? { comboId: item.id, cantidad: item.cantidad }
+        ? {
+            comboId: item.id,
+            cantidad: item.cantidad,
+            ...(item.productos?.some((p) => p.modificadores?.length > 0)
+              ? {
+                  productos: item.productos.map((p) => ({
+                    productoId: p.productoId,
+                    modificadores: p.modificadores.map((m) => ({ modificadorId: m.modificadorId })),
+                  })),
+                }
+              : {}),
+          }
         : item.esMitadYMitad
           ? { productoId: item.id, cantidad: item.cantidad, esMitadYMitad: true, sabor1ProductoId: item.sabor1ProductoId, sabor2ProductoId: item.sabor2ProductoId }
           : { productoId: item.id, cantidad: item.cantidad, modificadores: item.modificadores.map((m) => ({ modificadorId: m.modificadorId })) },
@@ -480,6 +513,7 @@ function NuevoPedidoPage() {
         <ModificadorModal open producto={modProducto} onClose={() => setModProducto(null)} onConfirm={confirmarModificadores} />
       )}
       <MitadYMitadModal open={mitadProducto !== null} producto={mitadProducto} sabores={saboresMitad} onClose={() => setMitadProducto(null)} onConfirm={confirmarMitad} />
+      <ComboModal open={comboModal !== null} combo={comboModal ?? { productos: [] }} onClose={() => setComboModal(null)} onConfirm={confirmarCombo} />
       <StockAlertaModal open={stockModal !== null} faltantes={stockModal?.faltantes ?? []} nombreDe={nombreDe} cargando={guardando} onConfirmar={() => ejecutar({ ...stockModal?.payload, usarDisponible: true })} onCancelar={() => setStockModal(null)} />
 
       {toast && (

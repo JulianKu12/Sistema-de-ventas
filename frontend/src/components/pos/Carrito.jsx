@@ -56,6 +56,14 @@ function ItemCarrito({ item, onIncrement, onDecrement, onRemove }) {
               {item.modificadores.map((m) => m.nombre).join(' · ')}
             </p>
           )}
+          {item.esCombo && item.productos?.some((p) => p.modificadores?.length > 0) && (
+            <p className="mt-0.5 text-xs text-muted">
+              {item.productos
+                .filter((p) => p.modificadores?.length > 0)
+                .map((p) => `${p.nombre}: ${p.modificadores.map((m) => m.nombre).join(', ')}`)
+                .join(' · ')}
+            </p>
+          )}
           <p className="mt-0.5 text-xs text-muted">{formatearPrecio(item.precioUnitario)} c/u</p>
         </div>
         <button

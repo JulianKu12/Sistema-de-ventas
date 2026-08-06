@@ -9,7 +9,7 @@ const etiquetasTipo = {
   Sustituir: 'Sustituir',
 }
 
-function ModificadorModal({ open, producto, onClose, onConfirm }) {
+function ModificadorModal({ open, producto, onClose, onConfirm, ocultarPrecio = false }) {
   const [seleccionados, setSeleccionados] = useState(() => new Set())
 
   const modificadores = producto.productoModificadores ?? []
@@ -52,7 +52,7 @@ function ModificadorModal({ open, producto, onClose, onConfirm }) {
             Cancelar
           </Button>
           <Button size="md" onClick={confirmar} disabled={modificadores.length === 0}>
-            Agregar · {formatearPrecio(producto.precio + costoExtra)}
+            {ocultarPrecio ? 'Aplicar' : `Agregar · ${formatearPrecio(producto.precio + costoExtra)}`}
           </Button>
         </>
       }

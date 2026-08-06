@@ -80,6 +80,36 @@ function aplicarModificadores(basePorUnidad, modificadoresDetallados) {
   }
 }
 
+// Resuelve los modificadores pedidos para UN producto: valida que existan,
+// estén activos y pertenezcan al producto, y devuelve los modificadores
+// detallados para aplicar sobre la receta. Compartida por productos normales y
+// por los productos dentro de un combo (docs/03: "los productos del combo
+// conservan sus propios modificadores").
+async function resolverModificadores(tx, producto, modificadores) {
+  const detallados = []
+  if (!Array.isArray(modificadores) || modificadores.length === 0) return detallados
+  if (producto.tipo !== 'Con_receta') {
+    throw new HttpError(400, `El producto "${producto.nombre}" es de reventa directa y no admite modificadores`)
+  }
+  const permitidos = new Set(producto.productoModificadores.map((pm) => pm.modificadorId))
+  for (const md of modificadores) {
+    const id = Number(md.modificadorId)
+    const mod = await tx.modificador.findUnique({ where: { id } })
+    if (!mod) throw new HttpError(404, `El modificador ${id} no existe`)
+    if (mod.estado === 'Inactivo') {
+      throw new HttpError(400, `El modificador "${mod.nombre}" está inactivo`)
+    }
+    if (!permitidos.has(mod.id)) {
+      throw new HttpError(400, `El modificador "${mod.nombre}" no está asociado al producto "${producto.nombre}"`)
+    }
+    // Permite congelar el costo del modificador (p. ej. generando la Venta
+    // desde un Pedido cuyos costos quedaron fijos al capturarse).
+    if (md.costoAplicado !== undefined) mod.costoAplicado = md.costoAplicado
+    detallados.push(mod)
+  }
+  return detallados
+}
+
 // Expande un ítem de COMBO (docs/03): descuenta inventario según la receta de
 // cada Producto incluido (Combo_Producto), cobra el precio del combo (precio
 // especial o "otro precio" manual) y devuelve una fila por producto para
@@ -87,7 +117,18 @@ function aplicarModificadores(basePorUnidad, modificadoresDetallados) {
 async function procesarCombo(tx, item, opciones = {}) {
   const combo = await tx.combo.findUnique({
     where: { id: Number(item.comboId) },
-    include: { productos: { include: { producto: { include: { productoIngredientes: true } } } } },
+    include: {
+      productos: {
+        include: {
+          producto: {
+            include: {
+              productoIngredientes: true,
+              productoModificadores: { include: { modificador: true } },
+            },
+          },
+        },
+      },
+    },
   })
   if (!combo) throw new HttpError(404, `El combo ${item.comboId} no existe`)
   if (combo.estado !== 'Activo') {
@@ -96,12 +137,23 @@ async function procesarCombo(tx, item, opciones = {}) {
   if (!combo.productos.length) {
     throw new HttpError(400, `El combo "${combo.nombre}" no tiene productos asociados`)
   }
-  if (Array.isArray(item.modificadores) && item.modificadores.length > 0) {
-    throw new HttpError(400, 'Los combos no admiten modificadores (precio cerrado)')
-  }
 
   const cantidad = Number(item.cantidad)
   validarCantidad(cantidad)
+
+  // Modificadores por producto del combo (docs/03): los productos conservan sus
+  // propios modificadores, pero el precio del combo es CERRADO — el costo de los
+  // modificadores NO se suma al total (se registra en 0 para preparación).
+  const modsPorProducto = new Map()
+  if (Array.isArray(item.productos)) {
+    for (const pp of item.productos) {
+      const productoId = Number(pp.productoId)
+      if (!combo.productos.some((cp) => cp.productoId === productoId)) {
+        throw new HttpError(400, `El producto ${productoId} no pertenece al combo "${combo.nombre}"`)
+      }
+      modsPorProducto.set(productoId, pp.modificadores ?? [])
+    }
+  }
 
   // Precio por unidad del combo: "otro precio" manual (precioCongelado) o el
   // precio_especial del combo (docs/03).
@@ -125,12 +177,27 @@ async function procesarCombo(tx, item, opciones = {}) {
       throw new HttpError(400, `El producto "${p.nombre}" del combo no está disponible hoy`)
     }
     const filaCantidad = cantidad * cp.cantidad
-    const consumos = []
+    let consumos = []
+    let registrosModificadores = []
     if (p.tipo === 'Reventa_directa') {
       consumos.push({ tipo: 'producto', id: p.id, cantidad: filaCantidad })
     } else {
-      for (const pi of p.productoIngredientes) {
-        consumos.push({ tipo: 'ingrediente', id: pi.ingredienteId, cantidad: pi.cantidad * filaCantidad })
+      const basePorUnidad = p.productoIngredientes.map((pi) => ({
+        ingredienteId: pi.ingredienteId,
+        cantidad: pi.cantidad,
+      }))
+      const aplicados = aplicarModificadores(
+        basePorUnidad,
+        await resolverModificadores(tx, p, modsPorProducto.get(p.id) ?? []),
+      )
+      // Precio cerrado: el costo de los modificadores no altera el total del
+      // combo; solo se registran para la preparación.
+      registrosModificadores = aplicados.registros.map((r) => ({
+        modificadorId: r.modificadorId,
+        costoAplicado: 0,
+      }))
+      for (const x of aplicados.base) {
+        consumos.push({ tipo: 'ingrediente', id: x.ingredienteId, cantidad: x.cantidad * filaCantidad })
       }
     }
     // "Precio real" = suma de precios normales de los productos del combo
@@ -141,6 +208,7 @@ async function procesarCombo(tx, item, opciones = {}) {
       cantidad: filaCantidad,
       precioCongelado: p.precio,
       consumos,
+      modificadores: registrosModificadores,
       pedidoProductoId: vinculos.get(p.id) ?? null,
     })
   }
@@ -188,28 +256,7 @@ export async function procesarItem(tx, item, opciones = {}) {
   const precioCongelado = item.precioCongelado ?? producto.precio
 
   // Modificadores pedidos (solo aplican a productos con receta).
-  const modificadoresDetallados = []
-  if (Array.isArray(item.modificadores) && item.modificadores.length > 0) {
-    if (producto.tipo !== 'Con_receta') {
-      throw new HttpError(400, `El producto "${producto.nombre}" es de reventa directa y no admite modificadores`)
-    }
-    const permitidos = new Set(producto.productoModificadores.map((pm) => pm.modificadorId))
-    for (const md of item.modificadores) {
-      const id = Number(md.modificadorId)
-      const mod = await tx.modificador.findUnique({ where: { id } })
-      if (!mod) throw new HttpError(404, `El modificador ${id} no existe`)
-      if (mod.estado === 'Inactivo') {
-        throw new HttpError(400, `El modificador "${mod.nombre}" está inactivo`)
-      }
-      if (!permitidos.has(mod.id)) {
-        throw new HttpError(400, `El modificador "${mod.nombre}" no está asociado al producto "${producto.nombre}"`)
-      }
-      // Permite congelar el costo del modificador (p. ej. generando la Venta
-      // desde un Pedido cuyos costos quedaron fijos al capturarse).
-      if (md.costoAplicado !== undefined) mod.costoAplicado = md.costoAplicado
-      modificadoresDetallados.push(mod)
-    }
-  }
+  const modificadoresDetallados = await resolverModificadores(tx, producto, item.modificadores)
 
   const consumos = []
 
@@ -466,7 +513,7 @@ export async function ejecutarVenta(tx, {
           },
           comboId: it.comboId,
           comboPrecioCongelado: it.comboPrecioCongelado,
-          modificadores: [],
+          modificadores: dp.modificadores ?? [],
           consumos: agruparConsumos(dp.consumos),
           pedidoProductoId: dp.pedidoProductoId ?? null,
         })
