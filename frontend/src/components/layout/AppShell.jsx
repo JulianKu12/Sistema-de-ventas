@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
 
@@ -115,57 +116,91 @@ const items = [
 
 function AppShell() {
   const { usuario, logout } = useAuth()
+  const [abierto, setAbierto] = useState(true)
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <aside className="flex w-[260px] shrink-0 flex-col border-r border-black/5 bg-card">
-        <div className="flex items-center gap-3 px-5 py-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-white">
+      <aside className={`flex shrink-0 flex-col border-r border-black/5 bg-card transition-[width] duration-200 ${abierto ? 'w-[260px]' : 'w-[80px]'}`}>
+        <div className={`flex items-center gap-3 px-5 py-5 ${abierto ? '' : 'justify-center px-2'}`}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-white">
             <IconoVenta />
           </div>
-          <div>
-            <p className="font-bold leading-tight text-ink">Sistema POS</p>
-            <p className="text-xs text-muted">Lonchería</p>
-          </div>
+          {abierto && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-bold leading-tight text-ink">Sistema POS</p>
+              <p className="truncate text-xs text-muted">Lonchería</p>
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-          {items.map((item) =>
-            item.deshabilitado ? (
+          {items.map((item) => {
+            const contenido = (
+              <>
+                <span className="shrink-0">{item.icono}</span>
+                {abierto && <span className="truncate">{item.etiqueta}</span>}
+              </>
+            )
+            return item.deshabilitado ? (
               <span
                 key={item.to}
-                className="flex cursor-not-allowed items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-muted/50"
+                title={item.etiqueta}
+                className={`flex cursor-not-allowed items-center rounded-2xl text-sm font-medium text-muted/50 ${
+                  abierto ? 'gap-3 px-4 py-3' : 'justify-center px-0 py-3'
+                }`}
               >
-                {item.icono}
-                {item.etiqueta}
+                {contenido}
               </span>
             ) : (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                title={item.etiqueta}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                    isActive ? 'bg-accent/10 text-accent' : 'text-ink active:bg-muted/10'
-                  }`
+                  `flex items-center rounded-xl text-sm font-medium transition ${
+                    abierto ? 'gap-3 px-4 py-3' : 'justify-center px-0 py-3'
+                  } ${isActive ? 'bg-accent/10 text-accent' : 'text-ink active:bg-muted/10'}`
                 }
               >
-                {item.icono}
-                {item.etiqueta}
+                {contenido}
               </NavLink>
-            ),
-          )}
+            )
+          })}
         </nav>
 
-        <div className="border-t border-black/5 px-5 py-4">
-          <p className="mb-2 truncate text-sm font-medium text-ink">{usuario?.nombre}</p>
+        <div className="border-t border-black/5 p-3">
           <button
             type="button"
-            onClick={logout}
-            className="w-full rounded-2xl bg-input px-4 py-2.5 text-sm font-semibold text-ink transition active:scale-[0.97] active:bg-muted/20"
+            onClick={() => setAbierto((v) => !v)}
+            aria-label={abierto ? 'Contraer menú' : 'Expandir menú'}
+            className={`flex w-full items-center rounded-xl bg-input font-semibold text-ink transition active:scale-[0.97] active:bg-muted/20 ${
+              abierto ? 'gap-3 px-4 py-2.5 text-sm' : 'justify-center px-0 py-2.5'
+            }`}
           >
-            Cerrar sesión
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0" aria-hidden="true">
+              <path d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" />
+            </svg>
+            {abierto && <span>Colapsar menú</span>}
           </button>
+          <div className={abierto ? 'mt-3 px-1' : 'mt-3'}>
+            <p className={`mb-2 truncate text-sm font-medium text-ink ${abierto ? '' : 'text-center'}`} title={usuario?.nombre}>
+              {usuario?.nombre}
+            </p>
+            <button
+              type="button"
+              onClick={logout}
+              title="Cerrar sesión"
+              className={`flex w-full items-center rounded-xl bg-input font-semibold text-ink transition active:scale-[0.97] active:bg-muted/20 ${
+                abierto ? 'gap-3 px-4 py-2.5 text-sm' : 'justify-center px-0 py-2.5'
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0" aria-hidden="true">
+                <path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5A2.25 2.25 0 0 0 3.75 5.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3-3 3M9 12h12" />
+              </svg>
+              {abierto && <span>Cerrar sesión</span>}
+            </button>
+          </div>
         </div>
       </aside>
 
