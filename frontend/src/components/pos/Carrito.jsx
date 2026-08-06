@@ -99,11 +99,18 @@ function Carrito({
   onCobrar,
   cobrando,
   cajaAbierta,
+  opcionesCambio = [],
+  montoReferencia = null,
+  onMontoReferencia,
 }) {
+  const requiereCambio = metodoPago === 'Efectivo' && !noCobrar && items.length > 0
+  const cambioValido = montoReferencia != null && montoReferencia >= total
+  const cambioALlevar = requiereCambio && cambioValido ? montoReferencia - total : null
+
   return (
     <aside className="flex w-full max-w-[400px] flex-col bg-card">
       <div className="border-b border-black/5 px-6 py-4">
-        <h2 className="text-lg font-bold text-ink">Venta actual</h2>
+        <h2 className="text-lg font-bold text-ink">Venta rápida</h2>
         <p className="text-sm text-muted">
           {items.length === 0 ? 'Sin artículos' : `${items.length} artículo${items.length === 1 ? '' : 's'}`}
         </p>
@@ -164,11 +171,49 @@ function Carrito({
           </div>
         )}
 
+        {requiereCambio && (
+          <div>
+            <p className="mb-2 text-sm font-medium text-muted">¿Con cuánto paga el cliente?</p>
+            <div className="flex flex-wrap gap-2">
+              {opcionesCambio.length === 0 ? (
+                <p className="text-sm text-muted">Sin opciones de cambio configuradas</p>
+              ) : (
+                opcionesCambio.map((op) => (
+                  <button
+                    key={op}
+                    type="button"
+                    onClick={() => onMontoReferencia(op)}
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                      montoReferencia === op
+                        ? 'bg-accent text-white'
+                        : op < total
+                          ? 'bg-input text-muted'
+                          : 'bg-input text-ink'
+                    }`}
+                  >
+                    ${op}
+                  </button>
+                ))
+              )}
+            </div>
+            {montoReferencia != null && montoReferencia < total && (
+              <p className="mt-2 text-sm font-medium text-danger">
+                El cliente paga menos que el total
+              </p>
+            )}
+            {cambioALlevar != null && (
+              <p className="mt-2 text-sm font-medium text-ink">
+                Cambio a llevar: <span className="font-bold">{formatearPrecio(cambioALlevar)}</span>
+              </p>
+            )}
+          </div>
+        )}
+
         <Button
           type="button"
           className="w-full"
           onClick={onCobrar}
-          disabled={items.length === 0 || cobrando || !cajaAbierta}
+          disabled={items.length === 0 || cobrando || !cajaAbierta || (requiereCambio && !cambioValido)}
         >
           {cobrando ? 'Cobrando…' : items.length === 0 ? 'Cobrar' : `Cobrar · ${formatearPrecio(total)}`}
         </Button>

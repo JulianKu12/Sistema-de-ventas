@@ -56,6 +56,7 @@ enum MetodoPago {
   Efectivo
   Tarjeta
   Transferencia
+  Otro
 }
 
 enum TipoMovimientoInventario {

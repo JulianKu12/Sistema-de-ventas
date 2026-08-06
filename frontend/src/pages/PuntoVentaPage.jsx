@@ -1,52 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import { listarCombos, listarProductos } from '../services/catalogo'
 import { listarIngredientes } from '../services/ingredientes'
 import { abrirCaja, obtenerEstadoCaja } from '../services/caja'
-import { crearVenta } from '../services/ventas'
+import { crearPedido } from '../services/pedidos'
+import { estadoConfig } from '../services/config'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Carrito from '../components/pos/Carrito'
+import ProductoCard from '../components/pos/ProductoCard'
 import AbrirCajaModal from '../components/pos/AbrirCajaModal'
 import ModificadorModal from '../components/pos/ModificadorModal'
 import MitadYMitadModal from '../components/pos/MitadYMitadModal'
 import StockAlertaModal from '../components/pos/StockAlertaModal'
-import { formatearPrecio } from '../utils/formato'
-
-function ProductoCard({ nombre, precio, sub, esCombo, onClick, onMitad }) {
-  return (
-    <div className="flex min-h-[120px] flex-col rounded-2xl bg-card shadow-card">
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex flex-1 flex-col justify-between gap-2 rounded-2xl p-4 text-left transition active:scale-[0.97] disabled:opacity-50"
-      >
-        <div className="flex items-start justify-between gap-2">
-          <span className="line-clamp-2 font-semibold text-ink">{nombre}</span>
-          {esCombo && (
-            <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
-              Combo
-            </span>
-          )}
-        </div>
-        <span className="text-lg font-bold text-accent">{formatearPrecio(precio)}</span>
-        {sub && <span className="text-xs text-muted">{sub}</span>}
-      </button>
-      {onMitad && (
-        <button
-          type="button"
-          onClick={onMitad}
-          className="mx-2 mb-2 flex items-center justify-center gap-1 rounded-xl bg-accent/10 px-3 py-2 text-xs font-semibold text-accent transition active:scale-[0.97] active:bg-accent/20"
-        >
-          <span className="text-sm font-bold">½</span> Mitad y mitad
-        </button>
-      )}
-    </div>
-  )
-}
 
 function PuntoVentaPage() {
   const { logout } = useAuth()
+  const navigate = useNavigate()
 
   const [productos, setProductos] = useState([])
   const [combos, setCombos] = useState([])
@@ -71,6 +42,8 @@ function PuntoVentaPage() {
 
   const [noCobrar, setNoCobrar] = useState(false)
   const [metodoPago, setMetodoPago] = useState('Efectivo')
+  const [opcionesCambio, setOpcionesCambio] = useState([])
+  const [montoReferencia, setMontoReferencia] = useState(null)
 
   useEffect(() => {
     let activo = true
@@ -78,17 +51,19 @@ function PuntoVentaPage() {
       setCargandoCatalogo(true)
       setCargandoCaja(true)
       try {
-        const [estadoCaja, prods, combosLista, ings] = await Promise.all([
+        const [estadoCaja, prods, combosLista, ings, cfg] = await Promise.all([
           obtenerEstadoCaja(),
           listarProductos(),
           listarCombos(),
           listarIngredientes(),
+          estadoConfig(),
         ])
         if (!activo) return
         setCaja(estadoCaja)
         setProductos(prods)
         setCombos(combosLista.filter((c) => c.estado === 'Activo'))
         setIngredientes(ings)
+        setOpcionesCambio(cfg.opcionesCambio || [])
       } catch (err) {
         if (!activo) return
         if (err.status === 401) {
@@ -113,6 +88,10 @@ function PuntoVentaPage() {
     const temporizador = setTimeout(() => setToast(''), 2500)
     return () => clearTimeout(temporizador)
   }, [toast])
+
+  useEffect(() => {
+    setMontoReferencia(null)
+  }, [carrito, metodoPago, noCobrar])
 
   const nombres = useMemo(() => {
     const mapa = new Map()
@@ -221,6 +200,8 @@ function PuntoVentaPage() {
   const quitar = (key) => setCarrito((previo) => previo.filter((i) => i.key !== key))
 
   const construirPayload = (usarDisponible) => ({
+    tipo: 'Para_recoger',
+    origen: 'Mostrador',
     productos: carrito.map((item) =>
       item.tipo === 'combo'
         ? { comboId: item.id, cantidad: item.cantidad }
@@ -240,6 +221,7 @@ function PuntoVentaPage() {
     ),
     metodoPago,
     noCobrar,
+    ...(metodoPago === 'Efectivo' && !noCobrar ? { montoReferenciaPago: montoReferencia } : {}),
     ...(usarDisponible ? { usarDisponible } : {}),
   })
 
@@ -247,10 +229,12 @@ function PuntoVentaPage() {
     setCobrando(true)
     setErrorGeneral('')
     try {
-      await crearVenta(payload)
+      const pedido = await crearPedido(payload)
       setCarrito([])
-      setToast('Venta registrada')
       setStockModal(null)
+      setMontoReferencia(null)
+      setToast(`Pedido #${pedido.id} registrado y cobrado`)
+      navigate('/')
     } catch (err) {
       if (err.status === 401) {
         logout()
@@ -295,7 +279,7 @@ function PuntoVentaPage() {
   return (
     <main className="flex h-full flex-col overflow-hidden">
       <header className="flex items-center justify-between gap-4 border-b border-black/5 bg-card px-6 py-4">
-        <h1 className="text-2xl font-bold text-ink">Punto de Venta</h1>
+        <h1 className="text-2xl font-bold text-ink">Venta rápida</h1>
         <div
           className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
             cargandoCaja
@@ -429,6 +413,9 @@ function PuntoVentaPage() {
           onCobrar={manejarCobrar}
           cobrando={cobrando}
           cajaAbierta={caja.abierta}
+          opcionesCambio={opcionesCambio}
+          montoReferencia={montoReferencia}
+          onMontoReferencia={setMontoReferencia}
         />
       </div>
 

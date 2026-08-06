@@ -44,7 +44,7 @@ const includePedido = {
 function validarMetodoPago(tipo, metodoPago) {
   if (metodoPago === undefined) return 'Efectivo'
   if (!esEnumValido(metodoPago, METODOS_PAGO)) {
-    throw new HttpError(400, 'metodoPago inválido (Efectivo, Tarjeta o Transferencia)')
+    throw new HttpError(400, 'metodoPago inválido (Efectivo, Tarjeta, Transferencia u Otro)')
   }
   if (tipo === 'A_domicilio' && metodoPago === 'Tarjeta') {
     throw new HttpError(400, 'Un pedido A_domicilio no admite Tarjeta (solo Efectivo o Transferencia)')
@@ -122,6 +122,7 @@ export const crearPedido = asyncHandler(async (req, res) => {
     montoReferenciaPago,
     noCobrar = false,
     usarDisponible,
+    pagarAhora,
   } = req.body
 
   if (!esEnumValido(tipo, TIPOS_PEDIDO)) {
@@ -136,7 +137,21 @@ export const crearPedido = asyncHandler(async (req, res) => {
   if (referenciaId != null && tipo !== 'A_domicilio') {
     throw new HttpError(400, 'referenciaId solo aplica a pedidos A_domicilio')
   }
-  const montoResuelto = validarMetodoPago(tipo, noCobrar ? 'Efectivo' : metodoPago)
+  // Pagar al capturar o no (docs/06): si pagarAhora no llega explícito se
+  // conserva la regla por defecto (Mostrador + Para_recoger cobra al capturar).
+  const estadoPagoInicial =
+    typeof pagarAhora === 'boolean'
+      ? pagarAhora
+        ? 'Pagado'
+        : 'Pendiente_pago'
+      : origen === 'Mostrador' && tipo === 'Para_recoger'
+        ? 'Pagado'
+        : 'Pendiente_pago'
+
+  if (estadoPagoInicial === 'Pagado' && !noCobrar && !metodoPago) {
+    throw new HttpError(400, 'metodoPago es obligatorio si se paga al capturar el pedido')
+  }
+  const montoResuelto = validarMetodoPago(tipo, noCobrar ? 'Efectivo' : metodoPago || 'Efectivo')
 
   const usuarioId = resolverUsuario(req)
 
@@ -164,31 +179,26 @@ export const crearPedido = asyncHandler(async (req, res) => {
     const costoEnvio = esDomicilio && !noCobrar ? config.costoEnvio : null
     const total = totalProductos + (costoEnvio ?? 0)
 
-    // cambio_a_llevar: obligatorio si Efectivo y no_cobrar=false.
+    // cambio_a_llevar: obligatorio si se paga al capturar con Efectivo y no_cobrar=false.
     let montoReferencia = null
     let cambioALlevar = null
-    if (montoResuelto === 'Efectivo' && !noCobrar) {
+    if (estadoPagoInicial === 'Pagado' && montoResuelto === 'Efectivo' && !noCobrar) {
       if (typeof montoReferenciaPago !== 'number' || montoReferenciaPago < total) {
         throw new HttpError(400, 'montoReferenciaPago es obligatorio (Efectivo, no_cobrar=false) y debe cubrir el total')
       }
       montoReferencia = montoReferenciaPago
       cambioALlevar = montoReferencia - total
-    } else if (montoReferenciaPago != null) {
+      // monto_referencia_pago debe estar dentro de las opciones de cambio
+      // configuradas (docs/07). Un monto no configurado -> 400 con error claro.
+      if (!(config.opcionesCambio ?? []).includes(montoReferencia)) {
+        throw new HttpError(
+          400,
+          `montoReferenciaPago (${montoReferencia}) no está dentro de las opciones de cambio configuradas: ${(config.opcionesCambio ?? []).join(', ')}`
+        )
+      }
+    } else if (estadoPagoInicial === 'Pagado' && montoReferenciaPago != null) {
       throw new HttpError(400, 'montoReferenciaPago solo aplica si metodoPago=Efectivo y no_cobrar=false')
     }
-
-    // monto_referencia_pago debe estar dentro de las opciones de cambio
-    // configuradas (docs/07). Un monto no configurado -> 400 con error claro.
-    if (montoReferencia != null && !(config.opcionesCambio ?? []).includes(montoReferencia)) {
-      throw new HttpError(
-        400,
-        `montoReferenciaPago (${montoReferencia}) no está dentro de las opciones de cambio configuradas: ${(config.opcionesCambio ?? []).join(', ')}`
-      )
-    }
-
-    // estado_pago inicial (docs/06): Mostrador + Para_recoger cobra al capturar.
-    const estadoPagoInicial =
-      origen === 'Mostrador' && tipo === 'Para_recoger' ? 'Pagado' : 'Pendiente_pago'
 
     const pedido = await tx.pedido.create({
       data: {

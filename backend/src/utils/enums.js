@@ -2,7 +2,7 @@ export const UNIDADES_MEDIDA = ['kg', 'g', 'l', 'ml', 'pieza']
 export const TIPOS_PRODUCTO = ['Con_receta', 'Reventa_directa']
 export const TIPOS_MODIFICADOR = ['Agregar', 'Quitar', 'Sustituir']
 export const ESTADOS = ['Activo', 'Inactivo']
-export const METODOS_PAGO = ['Efectivo', 'Tarjeta', 'Transferencia']
+export const METODOS_PAGO = ['Efectivo', 'Tarjeta', 'Transferencia', 'Otro']
 export const TIPOS_MOVIMIENTO_INVENTARIO = [
   'Entrada',
   'Salida_venta',

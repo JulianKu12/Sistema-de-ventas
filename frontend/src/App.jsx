@@ -10,6 +10,8 @@ import CombosPage from './pages/CombosPage'
 import GastosPage from './pages/GastosPage'
 import CajaPage from './pages/CajaPage'
 import DevolucionesPage from './pages/DevolucionesPage'
+import PedidosPage from './pages/PedidosPage'
+import NuevoPedidoPage from './pages/NuevoPedidoPage'
 
 function RutaProtegida({ children }) {
   const { token } = useAuth()
@@ -29,7 +31,10 @@ function App() {
           </RutaProtegida>
         }
       >
-        <Route index element={<PuntoVentaPage />} />
+        <Route index element={<PedidosPage />} />
+        <Route path="nuevo-pedido" element={<NuevoPedidoPage />} />
+        <Route path="punto-venta" element={<PuntoVentaPage />} />
+        <Route path="pedidos" element={<PedidosPage />} />
         <Route path="ingredientes" element={<IngredientesPage />} />
         <Route path="inventario" element={<InventarioPage />} />
         <Route path="productos" element={<ProductosPage />} />
