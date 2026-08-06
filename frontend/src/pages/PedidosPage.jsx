@@ -8,6 +8,7 @@ import Button from '../components/ui/Button'
 import EnviarPedidoModal from '../components/pedidos/EnviarPedidoModal'
 import CancelarPedidoModal from '../components/pedidos/CancelarPedidoModal'
 import EditarPedidoModal from '../components/pedidos/EditarPedidoModal'
+import DetallePedidoModal from '../components/pedidos/DetallePedidoModal'
 
 const TABS = [
   { clave: 'Todos', etiqueta: 'Todos' },
@@ -26,104 +27,53 @@ const COLOR_ESTADO = {
   Cancelado: 'bg-danger/10 text-danger',
 }
 
-function nombreProducto(p) {
-  if (p.producto) return p.producto.nombre
-  if (p.combo) return p.combo.nombre
-  if (p.esMitadYMitad && p.mitadYMitad) {
-    const m = p.mitadYMitad
-    return `Mitad: ${m.sabor1Producto?.nombre ?? '?'} + ${m.sabor2Producto?.nombre ?? '?'}`
-  }
-  return 'Producto'
-}
-
-function FilaProducto({ p }) {
+function TarjetaResumen({ pedido, onAbrir }) {
+  const cliente = pedido.cliente ? pedido.cliente.nombre : pedido.nombreClienteLibre ?? 'Cliente no identificado'
   return (
-    <li className="flex items-center justify-between gap-3 rounded-xl bg-input px-3 py-2 text-sm">
-      <span className="min-w-0 truncate text-ink">
-        <span className="font-semibold">{p.cantidad}×</span> {nombreProducto(p)}
-      </span>
-      <span className="shrink-0 font-semibold text-muted">{formatearPrecio(p.precioCongelado * p.cantidad)}</span>
-    </li>
-  )
-}
-
-function TarjetaPedido({ pedido, onAvanzar, onEnviar, onCancelar, onPagar, onEditar }) {
-  const puede =
-    pedido.estadoPreparacion === 'Pendiente'
-      ? ['En_preparacion', 'Entregado']
-      : pedido.estadoPreparacion === 'En_preparacion'
-        ? ['Entregado']
-        : pedido.estadoPreparacion === 'Enviado'
-          ? ['Entregado']
-          : []
-  const puedeEnviar = (pedido.estadoPreparacion === 'Pendiente' || pedido.estadoPreparacion === 'En_preparacion') && pedido.tipo === 'A_domicilio'
-
-  return (
-    <div className="rounded-3xl bg-card p-4 shadow-card">
+    <button
+      type="button"
+      onClick={onAbrir}
+      className="group flex flex-col rounded-3xl bg-card p-4 text-left shadow-card transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-bold text-ink">Pedido #{pedido.id}</p>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${COLOR_ESTADO[pedido.estadoPreparacion]}`}>
-              {pedido.estadoPreparacion.replaceAll('_', ' ')}
-            </span>
-            <span className="rounded-full bg-muted/10 px-2 py-0.5 text-xs font-semibold text-muted">{pedido.tipo.replaceAll('_', ' ')}</span>
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            {pedido.origen} · {formatearFecha(pedido.fechaHoraCreacion)}
-            {pedido.repartidor ? ` · Repartidor: ${pedido.repartidor.nombre}` : ''}
-          </p>
-          <p className="mt-1 text-sm font-medium text-ink">
-            {pedido.cliente ? pedido.cliente.nombre : pedido.nombreClienteLibre ?? 'Cliente no identificado'}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-lg font-bold text-ink">{formatearPrecio(pedido.total)}</p>
-          <span className={`text-xs font-semibold ${pedido.estadoPago === 'Pagado' ? 'text-emerald-600' : 'text-warning'}`}>
-            {pedido.estadoPago === 'Pagado' ? 'Pagado' : 'Pendiente de pago'}
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-bold text-ink">#{pedido.id}</p>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${COLOR_ESTADO[pedido.estadoPreparacion]}`}>
+            {pedido.estadoPreparacion.replaceAll('_', ' ')}
+          </span>
+          <span className="rounded-full bg-muted/10 px-2 py-0.5 text-xs font-semibold text-muted">
+            {pedido.tipo.replaceAll('_', ' ')}
           </span>
         </div>
+        <p className="text-lg font-bold text-ink">{formatearPrecio(pedido.total)}</p>
       </div>
 
-      {pedido.productos && pedido.productos.length > 0 && (
-        <ul className="mt-3 space-y-1.5">
-          {pedido.productos.slice(0, 8).map((p, i) => (
-            <FilaProducto key={i} p={p} />
-          ))}
-        </ul>
-      )}
-
-      {pedido.noCobrar && (
-        <p className="mt-3 rounded-xl bg-muted/10 px-3 py-1.5 text-xs font-semibold text-muted">Consumo interno (no cobrar)</p>
-      )}
+      <p className="mt-2 text-sm font-semibold text-ink">{cliente}</p>
+      <p className="mt-0.5 text-xs text-muted">
+        {pedido.origen} · {formatearFecha(pedido.fechaHoraCreacion)}
+      </p>
+      {pedido.repartidor && <p className="mt-0.5 text-xs text-muted">Repartidor: {pedido.repartidor.nombre}</p>}
 
       {pedido.nota && (
-        <p className="mt-3 rounded-xl bg-warning/10 px-3 py-1.5 text-sm font-medium text-ink">
+        <p className="mt-2 truncate rounded-lg bg-warning/10 px-2 py-1 text-xs font-medium text-ink">
           <span className="font-bold text-accent">Nota:</span> {pedido.nota}
         </p>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {pedido.estadoPago === 'Pendiente_pago' && pedido.estadoPreparacion !== 'Cancelado' && (
-          <Button size="md" variant="dangerSoft" onClick={() => onPagar(pedido)}>Marcar pagado</Button>
-        )}
-        {puedeEnviar && (
-          <Button size="md" onClick={() => onEnviar(pedido)}>Enviar</Button>
-        )}
-        {(pedido.estadoPreparacion === 'Pendiente' || pedido.estadoPreparacion === 'En_preparacion') && (
-          <Button size="md" variant="secondary" onClick={() => onEditar(pedido)}>Editar</Button>
-        )}
-        {puede.includes('En_preparacion') && (
-          <Button size="md" variant="secondary" onClick={() => onAvanzar(pedido, 'En_preparacion')}>En preparación</Button>
-        )}
-        {puede.includes('Entregado') && (
-          <Button size="md" onClick={() => onAvanzar(pedido, 'Entregado')}>Entregado</Button>
-        )}
-        {(pedido.estadoPreparacion !== 'Cancelado' && pedido.estadoPreparacion !== 'Entregado') && (
-          <Button size="md" variant="dangerSoft" onClick={() => onCancelar(pedido)}>Cancelar</Button>
-        )}
+      <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3">
+        <span
+          className={`text-xs font-semibold ${
+            pedido.estadoPago === 'Pagado' ? 'text-emerald-600' : 'text-warning'
+          }`}
+        >
+          {pedido.estadoPago === 'Pagado' ? 'Pagado' : 'Pendiente de pago'}
+          {pedido.noCobrar ? ' · No cobrar' : ''}
+        </span>
+        <span className="text-xs font-semibold text-muted transition group-hover:text-accent">
+          Ver detalles →
+        </span>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -137,6 +87,7 @@ function PedidosPage() {
   const [config, setConfig] = useState(null)
   const [toast, setToast] = useState('')
 
+  const [detalle, setDetalle] = useState(null)
   const [modalEnviar, setModalEnviar] = useState(null)
   const [modalCancelar, setModalCancelar] = useState(null)
   const [modalEditar, setModalEditar] = useState(null)
@@ -262,22 +213,41 @@ function PedidosPage() {
         ) : visibles.length === 0 ? (
           <p className="mt-12 text-center text-muted">No hay pedidos en esta vista.</p>
         ) : (
-          <ul className="mx-auto max-w-3xl space-y-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {visibles.map((pedido) => (
-              <li key={pedido.id}>
-                <TarjetaPedido
-                  pedido={pedido}
-                  onAvanzar={(p, estado) => avanzar(p, estado)}
-                  onEnviar={(p) => setModalEnviar(p)}
-                  onCancelar={(p) => setModalCancelar(p)}
-                  onPagar={(p) => setPagarPedido(p)}
-                  onEditar={(p) => setModalEditar(p)}
-                />
-              </li>
+              <TarjetaResumen key={pedido.id} pedido={pedido} onAbrir={() => setDetalle(pedido)} />
             ))}
-          </ul>
+          </div>
         )}
       </div>
+
+      {detalle && (
+        <DetallePedidoModal
+          pedido={detalle}
+          guardando={guardando}
+          onCerrar={() => setDetalle(null)}
+          onAvanzar={(p, estado) => {
+            setDetalle(null)
+            avanzar(p, estado)
+          }}
+          onEnviar={(p) => {
+            setDetalle(null)
+            setModalEnviar(p)
+          }}
+          onEditar={(p) => {
+            setDetalle(null)
+            setModalEditar(p)
+          }}
+          onCancelar={(p) => {
+            setDetalle(null)
+            setModalCancelar(p)
+          }}
+          onPagar={(p) => {
+            setDetalle(null)
+            setPagarPedido(p)
+          }}
+        />
+      )}
 
       {modalEnviar && (
         <EnviarPedidoModal
