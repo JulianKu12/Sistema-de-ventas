@@ -196,13 +196,11 @@ function Carrito({
         )}
 
         {requiereCambio && (
-          <div>
+          <div className="rounded-2xl bg-input p-4">
             <p className="mb-2 text-sm font-medium text-muted">¿Con cuánto paga el cliente?</p>
-            <div className="flex flex-wrap gap-2">
-              {opcionesCambio.length === 0 ? (
-                <p className="text-sm text-muted">Sin opciones de cambio configuradas</p>
-              ) : (
-                opcionesCambio.map((op) => (
+            {opcionesCambio.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {opcionesCambio.map((op) => (
                   <button
                     key={op}
                     type="button"
@@ -211,24 +209,37 @@ function Carrito({
                       montoReferencia === op
                         ? 'bg-accent text-white'
                         : op < total
-                          ? 'bg-input text-muted'
-                          : 'bg-input text-ink'
+                          ? 'bg-card text-muted'
+                          : 'bg-card text-ink'
                     }`}
                   >
                     ${op}
                   </button>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
+            <label htmlFor="monto-pago" className="mt-2 mb-1 block text-xs font-medium text-muted">
+              Otro monto
+            </label>
+            <input
+              id="monto-pago"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={montoReferencia ?? ''}
+              onChange={(e) => onMontoReferencia(e.target.value === '' ? null : Number(e.target.value))}
+              placeholder="Escribe la cantidad…"
+              className="w-full rounded-xl bg-card px-3 py-2 text-sm text-ink outline-none placeholder:text-muted/60"
+            />
             {montoReferencia != null && montoReferencia < total && (
-              <p className="mt-2 text-sm font-medium text-danger">
-                El cliente paga menos que el total
-              </p>
+              <p className="mt-2 text-sm font-medium text-danger">El cliente paga menos que el total</p>
             )}
             {cambioALlevar != null && (
-              <p className="mt-2 text-sm font-medium text-ink">
-                Cambio a llevar: <span className="font-bold">{formatearPrecio(cambioALlevar)}</span>
-              </p>
+              <div className="mt-2 flex items-center justify-between rounded-xl bg-card px-3 py-2">
+                <span className="text-sm font-medium text-ink">Cambio</span>
+                <span className="text-base font-bold text-ink">{formatearPrecio(cambioALlevar)}</span>
+              </div>
             )}
           </div>
         )}
