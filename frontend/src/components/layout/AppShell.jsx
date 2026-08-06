@@ -33,6 +33,14 @@ function IconoCombo() {
   )
 }
 
+function IconoGasto() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <path d="M2.25 18.75a60 60 0 0 1 15.38-.2m-15.38.2a60 60 0 0 0 12.47 3.25c2.68.36 5.35-.66 6.88-2.05 1.69-1.55 2.02-3.98 1.06-5.45-.55-.84-1.56-1.34-2.42-1.25a3.75 3.75 0 0 0-3.1 1.82c-.44.78-.78 1.61-1.02 2.47m-.39 6.76V17.82m-3 .75c0-1.24-.28-2.45-.82-3.55l-1.5-3.7m3.9 7.25c.45 1.2.9 2.1 1.02 3.55M7.3 8.25l1.6-4.05c.3-.75 1.4-.75 1.7 0l1.6 4.05m-4.9 0 2 5.13a2.25 2.25 0 0 0 4.9-1.32l-2-5.07h2.4V2.51L7.5 4.74" />
+    </svg>
+  )
+}
+
 function IconoInventario() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
@@ -47,6 +55,7 @@ const items = [
   { to: '/inventario', etiqueta: 'Inventario', icono: <IconoInventario /> },
   { to: '/productos', etiqueta: 'Productos', icono: <IconoProducto /> },
   { to: '/combos', etiqueta: 'Combos', icono: <IconoCombo /> },
+  { to: '/gastos', etiqueta: 'Gastos', icono: <IconoGasto /> },
 ]
 
 function AppShell() {
