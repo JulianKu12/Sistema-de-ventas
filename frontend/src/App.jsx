@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import PuntoVentaPage from './pages/PuntoVentaPage'
 import IngredientesPage from './pages/IngredientesPage'
 import ProductosPage from './pages/ProductosPage'
+import CombosPage from './pages/CombosPage'
 
 function RutaProtegida({ children }) {
   const { token } = useAuth()
@@ -27,6 +28,7 @@ function App() {
         <Route index element={<PuntoVentaPage />} />
         <Route path="ingredientes" element={<IngredientesPage />} />
         <Route path="productos" element={<ProductosPage />} />
+        <Route path="combos" element={<CombosPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

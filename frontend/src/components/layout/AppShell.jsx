@@ -37,7 +37,7 @@ const items = [
   { to: '/', end: true, etiqueta: 'Punto de Venta', icono: <IconoVenta /> },
   { to: '/ingredientes', etiqueta: 'Ingredientes', icono: <IconoIngrediente /> },
   { to: '/productos', etiqueta: 'Productos', icono: <IconoProducto /> },
-  { to: '/combos', etiqueta: 'Combos', icono: <IconoCombo />, deshabilitado: true },
+  { to: '/combos', etiqueta: 'Combos', icono: <IconoCombo /> },
 ]
 
 function AppShell() {
