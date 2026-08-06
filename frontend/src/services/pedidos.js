@@ -20,3 +20,7 @@ export async function cambiarEstadoPago(id, datos) {
 export async function editarPedido(id, datos) {
   return api.patch(`/api/pedidos/${id}`, datos)
 }
+
+export async function pedidosRepartidor(repartidorId) {
+  return api.get(`/api/pedidos/repartidor/${repartidorId}`)
+}

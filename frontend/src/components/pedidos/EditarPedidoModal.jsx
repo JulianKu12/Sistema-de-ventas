@@ -17,22 +17,22 @@ function nombreProductoActual(p) {
   return 'Producto'
 }
 
-function FilaNuevo({ it, onCambiar, onQuitar }) {
+function FilaNuevo({ producto, onCambiar, onQuitar }) {
   return (
     <li className="flex items-center justify-between gap-3 rounded-xl bg-input px-3 py-2 text-sm">
       <div className="min-w-0">
-        <p className="truncate font-semibold text-ink">{it.nombre}</p>
-        {it.subnombre && <p className="text-xs font-medium text-ink">{it.subnombre}</p>}
-        {it.modificadores.length > 0 && (
-          <p className="text-xs text-muted">{it.modificadores.map((m) => m.nombre).join(' · ')}</p>
+        <p className="truncate font-semibold text-ink">{producto.nombre}</p>
+        {producto.subnombre && <p className="text-xs font-medium text-ink">{producto.subnombre}</p>}
+        {producto.modificadores.length > 0 && (
+          <p className="text-xs text-muted">{producto.modificadores.map((m) => m.nombre).join(' · ')}</p>
         )}
-        <p className="text-xs text-muted">{formatearPrecio(it.precioUnitario)} c/u</p>
+        <p className="text-xs text-muted">{formatearPrecio(producto.precioUnitario)} c/u</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <button type="button" onClick={() => onCambiar(it.key, -1)} className="h-7 w-7 rounded-full bg-card font-bold text-accent shadow-card">−</button>
-        <span className="w-5 text-center font-bold text-ink">{it.cantidad}</span>
-        <button type="button" onClick={() => onCambiar(it.key, 1)} className="h-7 w-7 rounded-full bg-card font-bold text-accent shadow-card">+</button>
-        <button type="button" onClick={() => onQuitar(it.key)} className="h-7 w-7 rounded-full bg-danger/10 text-danger">✕</button>
+        <button type="button" onClick={() => onCambiar(producto.key, -1)} className="h-7 w-7 rounded-full bg-card font-bold text-accent shadow-card">−</button>
+        <span className="w-5 text-center font-bold text-ink">{producto.cantidad}</span>
+        <button type="button" onClick={() => onCambiar(producto.key, 1)} className="h-7 w-7 rounded-full bg-card font-bold text-accent shadow-card">+</button>
+        <button type="button" onClick={() => onQuitar(producto.key)} className="h-7 w-7 rounded-full bg-danger/10 text-danger">✕</button>
       </div>
     </li>
   )
