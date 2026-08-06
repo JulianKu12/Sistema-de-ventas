@@ -16,6 +16,7 @@ import NuevoPedidoPage from './pages/NuevoPedidoPage'
 import RepartidoresPage from './pages/RepartidoresPage'
 import ConfiguracionPage from './pages/ConfiguracionPage'
 import ReportesPage from './pages/ReportesPage'
+import ClientesPage from './pages/ClientesPage'
 import MisPedidosPage from './pages/MisPedidosPage'
 
 function RutaProtegida({ children }) {
@@ -44,6 +45,7 @@ function App() {
       <Route path="repartidores" element={<RepartidoresPage />} />
       <Route path="configuracion" element={<ConfiguracionPage />} />
       <Route path="reportes" element={<ReportesPage />} />
+      <Route path="clientes" element={<ClientesPage />} />
     </>
   )
 

@@ -149,11 +149,11 @@ function CajaPage() {
     return () => clearTimeout(temporizador)
   }, [toast])
 
-  const abrir = async ({ fondoInicial }) => {
+  const abrir = async ({ fondoInicial, ventasPrevias }) => {
     setGuardando(true)
     setError('')
     try {
-      await abrirCaja({ fondoInicial })
+      await abrirCaja(ventasPrevias && ventasPrevias.length > 0 ? { fondoInicial, ventasPrevias } : { fondoInicial })
       setModalAbrir(false)
       setToast('Caja abierta correctamente')
       cargar()

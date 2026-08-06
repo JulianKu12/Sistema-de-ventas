@@ -15,6 +15,7 @@ const variantes = {
 const tamanos = {
   lg: 'min-h-14 px-8 py-4 text-lg',
   md: 'min-h-12 px-5 py-3 text-base',
+  sm: 'min-h-9 px-3 py-1.5 text-sm',
 }
 
 function Button({

@@ -19,6 +19,7 @@ const TIPOS = [
   { v: 'A_domicilio', l: 'A domicilio' },
 ]
 const METODOS = ['Efectivo', 'Tarjeta', 'Transferencia', 'Otro']
+const METODOS_DOMICILIO = ['Efectivo', 'Transferencia', 'Otro']
 
 function FilaItem({ it, onCambiar, onQuitar }) {
   return (
@@ -411,7 +412,7 @@ function NuevoPedidoPage() {
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted">Método de pago</p>
                 <div className="flex flex-wrap gap-2">
-                  {METODOS.map((m) => (
+                  {(tipo === 'A_domicilio' ? METODOS_DOMICILIO : METODOS).map((m) => (
                     <button key={m} type="button" onClick={() => setMetodo(m)}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${metodo === m ? 'bg-accent text-white' : 'bg-input text-muted'}`}>
                       {m}
