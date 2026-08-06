@@ -350,6 +350,7 @@ export async function ejecutarVenta(tx, {
   usarDisponible,
   usuarioId,
   diaOperativoId,
+  nota,
 }) {
   if (!Array.isArray(productos) || productos.length === 0) {
     throw new HttpError(400, 'Una venta requiere al menos un producto')
@@ -504,6 +505,7 @@ export async function ejecutarVenta(tx, {
       esVentaPreviaApertura,
       usuarioId,
       diaOperativoId,
+      nota: typeof nota === 'string' && nota.trim() !== '' ? nota.trim() : null,
     },
   })
 
@@ -742,6 +744,7 @@ export const crearVenta = asyncHandler(async (req, res) => {
       usarDisponible: req.body.usarDisponible,
       usuarioId,
       diaOperativoId: diaOperativo.id,
+      nota: req.body.nota,
     })
   )
 

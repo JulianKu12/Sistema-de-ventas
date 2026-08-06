@@ -62,6 +62,7 @@ function NuevoPedidoPage() {
   const [metodo, setMetodo] = useState('Efectivo')
   const [montoReferencia, setMontoReferencia] = useState(null)
   const [noCobrar, setNoCobrar] = useState(false)
+  const [nota, setNota] = useState('')
   const [opcionesCambio, setOpcionesCambio] = useState([])
   const [costoEnvio, setCostoEnvio] = useState(0)
 
@@ -204,6 +205,7 @@ function NuevoPedidoPage() {
     ...(clienteFinalId == null && clienteNombre.trim() ? { nombreClienteLibre: clienteNombre.trim() } : {}),
     pagarAhora,
     ...(noCobrar ? { noCobrar: true } : {}),
+    ...(nota.trim() ? { nota: nota.trim() } : {}),
     ...(!noCobrar && pagarAhora ? { metodoPago: metodo, ...(metodo === 'Efectivo' ? { montoReferenciaPago: montoReferencia } : {}) } : {}),
     ...(usarDisponible ? { usarDisponible } : {}),
   })
@@ -384,6 +386,17 @@ function NuevoPedidoPage() {
               {tipo === 'A_domicilio' && !noCobrar && (
                 <p className="text-xs text-muted">Costo de envío: {formatearPrecio(costoEnvio)}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted">Nota (para quien prepara)</p>
+              <textarea
+                value={nota}
+                onChange={(e) => setNota(e.target.value)}
+                rows={2}
+                placeholder="Ej: Poco cocido, sin cebolla… (no afecta inventario)"
+                className="w-full resize-none rounded-2xl bg-input px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted/60"
+              />
             </div>
 
             <label className="flex items-center justify-between rounded-2xl bg-input px-4 py-3">

@@ -123,6 +123,7 @@ export const crearPedido = asyncHandler(async (req, res) => {
     noCobrar = false,
     usarDisponible,
     pagarAhora,
+    nota,
   } = req.body
 
   if (!esEnumValido(tipo, TIPOS_PEDIDO)) {
@@ -214,6 +215,7 @@ export const crearPedido = asyncHandler(async (req, res) => {
         metodoPago: noCobrar ? 'Efectivo' : montoResuelto,
         montoReferenciaPago: montoReferencia,
         cambioALlevar,
+        nota: typeof nota === 'string' && nota.trim() !== '' ? nota.trim() : null,
         noCobrar,
         total,
       },
@@ -304,6 +306,7 @@ export const crearPedido = asyncHandler(async (req, res) => {
         usarDisponible,
         usuarioId,
         diaOperativoId: dia.id,
+        nota: pedido.nota,
       })
       if (r.conflicto) {
         const e = new HttpError(409, `No se pudo cobrar el pedido: ${r.mensaje}`)
@@ -384,6 +387,7 @@ async function registrarPagoPedido(tx, pedido, { metodoPago, usarDisponible, usu
     usarDisponible,
     usuarioId,
     diaOperativoId: dia.id,
+    nota: pedido.nota,
   })
   if (r.conflicto) {
     const e = new HttpError(409, `No se pudo registrar el pago: ${r.mensaje}`)
@@ -565,6 +569,7 @@ export const cambiarEstadoPreparacion = asyncHandler(async (req, res) => {
         costoEnvio: 0,
         usuarioId,
         diaOperativoId: dia.id,
+        nota: pedido.nota,
       })
       if (r.conflicto) {
         const e = new HttpError(409, `No se pudo registrar el "No cobrar": ${r.mensaje}`)

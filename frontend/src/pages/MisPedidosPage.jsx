@@ -137,6 +137,11 @@ function MisPedidosPage({ repartidorId }) {
                       {pedido.referencia && (
                         <p className="text-xs text-muted">Ref: {pedido.referencia.detalle}</p>
                       )}
+                      {pedido.nota && (
+                        <p className="mt-1 rounded-lg bg-warning/10 px-2 py-1 text-xs font-medium text-ink">
+                          <span className="font-bold text-accent">Nota:</span> {pedido.nota}
+                        </p>
+                      )}
                     </div>
                     <p className="text-lg font-bold text-ink">{formatearPrecio(pedido.total)}</p>
                   </div>

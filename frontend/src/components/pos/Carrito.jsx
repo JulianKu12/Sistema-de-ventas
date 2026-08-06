@@ -91,6 +91,8 @@ function Carrito({
   total,
   noCobrar,
   onToggleNoCobrar,
+  nota = '',
+  onNota,
   metodoPago,
   onMetodoPago,
   onIncrement,
@@ -140,6 +142,20 @@ function Carrito({
         <div className="flex items-center justify-between text-lg font-bold text-ink">
           <span>Total</span>
           <span>{formatearPrecio(total)}</span>
+        </div>
+
+        <div className="rounded-2xl bg-input px-4 py-3">
+          <label htmlFor="carrito-nota" className="text-sm font-medium text-muted">
+            Nota (para quien prepara)
+          </label>
+          <textarea
+            id="carrito-nota"
+            value={nota}
+            onChange={(e) => onNota?.(e.target.value)}
+            rows={2}
+            placeholder="Ej: Poco cocido, sin cebolla…"
+            className="mt-2 w-full resize-none rounded-xl bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-muted/60"
+          />
         </div>
 
         <Switch

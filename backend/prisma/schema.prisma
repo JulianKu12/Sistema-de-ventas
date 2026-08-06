@@ -263,6 +263,7 @@ model Venta {
   usuarioId             Int
   diaOperativoId        Int
   esVentaPreviaApertura Boolean    @default(false)
+  nota                  String?
 
   pedido         Pedido?          @relation("VentaTienePedido", fields: [pedidoId], references: [id])
   pedidoAsociado Pedido?          @relation("PedidoGeneraVenta")
@@ -432,6 +433,7 @@ model Pedido {
   metodoPago          MetodoPago        @default(Efectivo)
   montoReferenciaPago Float?
   cambioALlevar       Float?
+  nota                String?
   noCobrar            Boolean           @default(false)
   total               Float
   fechaHoraCreacion   DateTime          @default(now())

@@ -97,6 +97,12 @@ function TarjetaPedido({ pedido, onAvanzar, onEnviar, onCancelar, onPagar, onEdi
         <p className="mt-3 rounded-xl bg-muted/10 px-3 py-1.5 text-xs font-semibold text-muted">Consumo interno (no cobrar)</p>
       )}
 
+      {pedido.nota && (
+        <p className="mt-3 rounded-xl bg-warning/10 px-3 py-1.5 text-sm font-medium text-ink">
+          <span className="font-bold text-accent">Nota:</span> {pedido.nota}
+        </p>
+      )}
+
       <div className="mt-4 flex flex-wrap gap-2">
         {pedido.estadoPago === 'Pendiente_pago' && pedido.estadoPreparacion !== 'Cancelado' && (
           <Button size="md" variant="dangerSoft" onClick={() => onPagar(pedido)}>Marcar pagado</Button>

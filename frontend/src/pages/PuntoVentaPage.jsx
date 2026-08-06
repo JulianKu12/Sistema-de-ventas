@@ -41,6 +41,7 @@ function PuntoVentaPage() {
   const [toast, setToast] = useState('')
 
   const [noCobrar, setNoCobrar] = useState(false)
+  const [nota, setNota] = useState('')
   const [metodoPago, setMetodoPago] = useState('Efectivo')
   const [opcionesCambio, setOpcionesCambio] = useState([])
   const [montoReferencia, setMontoReferencia] = useState(null)
@@ -221,6 +222,7 @@ function PuntoVentaPage() {
     ),
     metodoPago,
     noCobrar,
+    ...(nota.trim() ? { nota: nota.trim() } : {}),
     ...(metodoPago === 'Efectivo' && !noCobrar ? { montoReferenciaPago: montoReferencia } : {}),
     ...(usarDisponible ? { usarDisponible } : {}),
   })
@@ -233,6 +235,7 @@ function PuntoVentaPage() {
       setCarrito([])
       setStockModal(null)
       setMontoReferencia(null)
+      setNota('')
       setToast(`Pedido #${pedido.id} registrado y cobrado`)
       navigate('/')
     } catch (err) {
@@ -405,6 +408,8 @@ function PuntoVentaPage() {
           total={totalCarrito}
           noCobrar={noCobrar}
           onToggleNoCobrar={() => setNoCobrar((v) => !v)}
+          nota={nota}
+          onNota={setNota}
           metodoPago={metodoPago}
           onMetodoPago={setMetodoPago}
           onIncrement={incrementar}
