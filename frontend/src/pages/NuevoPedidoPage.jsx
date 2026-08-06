@@ -256,7 +256,7 @@ function NuevoPedidoPage() {
         return
       }
       if (err.status === 409 && err.datos?.stockInsuficiente) {
-        setStockModal({ faltantes: err.datos.stockInsuficiente, payload })
+        setStockModal({ faltantes: err.datos.stockInsuficiente, opcionesPrecio: err.datos.opcionesPrecio ?? [], payload })
         return
       }
       setError(err.message)
@@ -290,6 +290,37 @@ function NuevoPedidoPage() {
     }
 
     ejecutar(construirPayload(clienteFinalId))
+  }
+
+  const venderSeparado = (modo) => {
+    const base = stockModal?.payload
+    const oc = stockModal?.opcionesPrecio ?? []
+    if (!base || oc.length === 0) return
+    const nuevos = (base.productos ?? []).flatMap((item) => {
+      if (item.comboId == null) return [item]
+      const o = oc.find((x) => Number(x.comboId) === Number(item.comboId))
+      if (!o) return [item]
+      const prods = o.productos ?? []
+      const precioReal = prods.reduce((a, pp) => a + pp.precioUnitario * pp.cantidad, 0)
+      return prods.map((pp) => {
+        const orig = (item.productos ?? []).find((b) => Number(b.productoId) === Number(pp.productoId))
+        let precio = pp.precioUnitario
+        if (typeof modo === 'number' && precioReal > 0) {
+          precio = Math.round(pp.precioUnitario * (modo / precioReal) * 100) / 100
+        }
+        return {
+          productoId: pp.productoId,
+          cantidad: pp.cantidad,
+          esMitadYMitad: false,
+          precioCongelado: precio,
+          ...(orig?.modificadores?.length
+            ? { modificadores: orig.modificadores.map((m) => ({ modificadorId: m.modificadorId, costoAplicado: 0 })) }
+            : {}),
+        }
+      })
+    })
+    setStockModal(null)
+    ejecutar({ ...base, productos: nuevos })
   }
 
   return (
@@ -514,7 +545,16 @@ function NuevoPedidoPage() {
       )}
       <MitadYMitadModal open={mitadProducto !== null} producto={mitadProducto} sabores={saboresMitad} onClose={() => setMitadProducto(null)} onConfirm={confirmarMitad} />
       <ComboModal open={comboModal !== null} combo={comboModal ?? { productos: [] }} onClose={() => setComboModal(null)} onConfirm={confirmarCombo} />
-      <StockAlertaModal open={stockModal !== null} faltantes={stockModal?.faltantes ?? []} nombreDe={nombreDe} cargando={guardando} onConfirmar={() => ejecutar({ ...stockModal?.payload, usarDisponible: true })} onCancelar={() => setStockModal(null)} />
+      <StockAlertaModal
+        open={stockModal !== null}
+        faltantes={stockModal?.faltantes ?? []}
+        nombreDe={nombreDe}
+        cargando={guardando}
+        opcionesPrecio={stockModal?.opcionesPrecio ?? []}
+        onVenderSeparado={venderSeparado}
+        onConfirmar={() => ejecutar({ ...stockModal?.payload, usarDisponible: true })}
+        onCancelar={() => setStockModal(null)}
+      />
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card">{toast}</div>

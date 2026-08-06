@@ -270,7 +270,7 @@ function PuntoVentaPage() {
         return
       }
       if (err.status === 409 && err.datos?.stockInsuficiente) {
-        setStockModal({ faltantes: err.datos.stockInsuficiente, payload })
+        setStockModal({ faltantes: err.datos.stockInsuficiente, opcionesPrecio: err.datos.opcionesPrecio ?? [], payload })
         return
       }
       setErrorGeneral(err.message)
@@ -284,6 +284,37 @@ function PuntoVentaPage() {
   const confirmarStock = () => {
     if (!stockModal) return
     ejecutarCobro({ ...stockModal.payload, usarDisponible: true })
+  }
+
+  const venderSeparado = (modo) => {
+    const base = stockModal?.payload
+    const oc = stockModal?.opcionesPrecio ?? []
+    if (!base || oc.length === 0) return
+    const nuevos = (base.productos ?? []).flatMap((item) => {
+      if (item.comboId == null) return [item]
+      const o = oc.find((x) => Number(x.comboId) === Number(item.comboId))
+      if (!o) return [item]
+      const prods = o.productos ?? []
+      const precioReal = prods.reduce((a, pp) => a + pp.precioUnitario * pp.cantidad, 0)
+      return prods.map((pp) => {
+        const orig = (item.productos ?? []).find((b) => Number(b.productoId) === Number(pp.productoId))
+        let precio = pp.precioUnitario
+        if (typeof modo === 'number' && precioReal > 0) {
+          precio = Math.round(pp.precioUnitario * (modo / precioReal) * 100) / 100
+        }
+        return {
+          productoId: pp.productoId,
+          cantidad: pp.cantidad,
+          esMitadYMitad: false,
+          precioCongelado: precio,
+          ...(orig?.modificadores?.length
+            ? { modificadores: orig.modificadores.map((m) => ({ modificadorId: m.modificadorId, costoAplicado: 0 })) }
+            : {}),
+        }
+      })
+    })
+    setStockModal(null)
+    ejecutarCobro({ ...base, productos: nuevos })
   }
 
   const manejarAbrirCaja = async (fondoInicial) => {
@@ -475,6 +506,8 @@ function PuntoVentaPage() {
         nombreDe={nombreDe}
         cargando={cobrando}
         onConfirmar={confirmarStock}
+        opcionesPrecio={stockModal?.opcionesPrecio ?? []}
+        onVenderSeparado={venderSeparado}
         onCancelar={() => setStockModal(null)}
       />
 

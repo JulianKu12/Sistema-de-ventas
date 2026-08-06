@@ -205,6 +205,7 @@ async function procesarCombo(tx, item, opciones = {}) {
     precioReal += p.precio * cp.cantidad
     detalleProductos.push({
       productoId: p.id,
+      nombre: p.nombre,
       cantidad: filaCantidad,
       precioCongelado: p.precio,
       consumos,
@@ -471,8 +472,14 @@ export async function ejecutarVenta(tx, {
         return {
           comboId: c.comboId,
           cantidad: c.cantidad,
-          precioReal: disponibles.reduce((a, dp) => a + dp.precioCongelado, 0),
+          precioReal: disponibles.reduce((a, dp) => a + dp.precioCongelado * dp.cantidad, 0),
           precioEspecial: c.comboPrecioCongelado,
+          productos: disponibles.map((dp) => ({
+            productoId: dp.productoId,
+            nombre: dp.nombre,
+            cantidad: dp.cantidad,
+            precioUnitario: dp.precioCongelado,
+          })),
         }
       })
     }

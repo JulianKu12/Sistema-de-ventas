@@ -17,5 +17,6 @@ export function errorHandler(err, _req, res, _next) {
   if (status >= 500) console.error(err)
   const body = { message }
   if (err?.faltantes) body.stockInsuficiente = err.faltantes
+  if (err?.opcionesPrecio) body.opcionesPrecio = err.opcionesPrecio
   res.status(status).json(body)
 }

@@ -330,6 +330,7 @@ export const crearPedido = asyncHandler(async (req, res) => {
       if (r.conflicto) {
         const e = new HttpError(409, `No se pudo cobrar el pedido: ${r.mensaje}`)
         e.faltantes = r.faltantes
+        if (r.opcionesPrecio) e.opcionesPrecio = r.opcionesPrecio
         throw e
       }
       venta = r.venta
