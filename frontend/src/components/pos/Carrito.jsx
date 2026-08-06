@@ -118,17 +118,20 @@ function Carrito({
   const cambioALlevar = requiereCambio && cambioValido ? montoReferencia - total : null
 
   return (
-    <aside className="flex w-full max-w-[400px] flex-col bg-card">
-      <div className="border-b border-black/5 px-6 py-4">
-        <h2 className="text-lg font-bold text-ink">Venta rápida</h2>
-        <p className="text-sm text-muted">
-          {items.length === 0 ? 'Sin artículos' : `${items.length} artículo${items.length === 1 ? '' : 's'}`}
-        </p>
+    <aside className="flex h-full min-h-0 w-full max-w-[400px] flex-col overflow-hidden bg-card">
+      <div className="flex items-center justify-between border-b border-black/5 px-5 py-3">
+        <div>
+          <h2 className="text-lg font-bold leading-tight text-ink">Venta rápida</h2>
+          <p className="text-xs text-muted">
+            {items.length === 0 ? 'Sin artículos' : `${items.length} artículo${items.length === 1 ? '' : 's'}`}
+          </p>
+        </div>
+        <span className="text-lg font-bold text-ink">{formatearPrecio(total)}</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3">
         {items.length === 0 ? (
-          <p className="mt-8 text-center text-sm text-muted">
+          <p className="mt-6 text-center text-sm text-muted">
             Toca un producto del menú para agregarlo a la venta.
           </p>
         ) : (
@@ -146,36 +149,30 @@ function Carrito({
         )}
       </div>
 
-      <div className="space-y-4 border-t border-black/5 px-6 py-5">
-        <div className="flex items-center justify-between text-lg font-bold text-ink">
-          <span>Total</span>
-          <span>{formatearPrecio(total)}</span>
-        </div>
+      <div className="border-t border-black/5 px-5 py-4">
+        <div className="space-y-3">
+          <div className="rounded-2xl bg-input px-3 py-2">
+            <label htmlFor="carrito-nota" className="text-xs font-medium text-muted">
+              Nota (para quien prepara)
+            </label>
+            <textarea
+              id="carrito-nota"
+              value={nota}
+              onChange={(e) => onNota?.(e.target.value)}
+              rows={1}
+              placeholder="Ej: Poco cocido, sin cebolla…"
+              className="mt-1 w-full resize-none bg-transparent px-0 py-0 text-sm text-ink outline-none placeholder:text-muted/60"
+            />
+          </div>
 
-        <div className="rounded-2xl bg-input px-4 py-3">
-          <label htmlFor="carrito-nota" className="text-sm font-medium text-muted">
-            Nota (para quien prepara)
-          </label>
-          <textarea
-            id="carrito-nota"
-            value={nota}
-            onChange={(e) => onNota?.(e.target.value)}
-            rows={2}
-            placeholder="Ej: Poco cocido, sin cebolla…"
-            className="mt-2 w-full resize-none rounded-xl bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-muted/60"
+          <Switch
+            checked={noCobrar}
+            onChange={onToggleNoCobrar}
+            label="No cobrar"
+            description="Consumo interno: no suma a la caja"
           />
-        </div>
 
-        <Switch
-          checked={noCobrar}
-          onChange={onToggleNoCobrar}
-          label="No cobrar"
-          description="Consumo interno: no suma a la caja"
-        />
-
-        {!noCobrar && (
-          <div>
-            <p className="mb-2 text-sm font-medium text-muted">Método de pago</p>
+          {!noCobrar && (
             <div className="flex rounded-2xl bg-input p-1" role="tablist" aria-label="Método de pago">
               {METODOS.map((m) => (
                 <button
@@ -184,7 +181,7 @@ function Carrito({
                   role="tab"
                   aria-selected={metodoPago === m}
                   onClick={() => onMetodoPago(m)}
-                  className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                  className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                     metodoPago === m ? 'bg-card text-ink shadow-card' : 'text-muted'
                   }`}
                 >
@@ -192,66 +189,68 @@ function Carrito({
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {requiereCambio && (
-          <div className="rounded-2xl bg-input p-4">
-            <p className="mb-2 text-sm font-medium text-muted">¿Con cuánto paga el cliente?</p>
-            {opcionesCambio.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {opcionesCambio.map((op) => (
-                  <button
-                    key={op}
-                    type="button"
-                    onClick={() => onMontoReferencia(op)}
-                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                      montoReferencia === op
-                        ? 'bg-accent text-white'
-                        : op < total
-                          ? 'bg-card text-muted'
-                          : 'bg-card text-ink'
-                    }`}
-                  >
-                    ${op}
-                  </button>
-                ))}
+          {requiereCambio && (
+            <div className="rounded-2xl bg-input p-3">
+              <p className="mb-2 text-xs font-medium text-muted">¿Con cuánto paga el cliente?</p>
+              {opcionesCambio.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {opcionesCambio.map((op) => (
+                    <button
+                      key={op}
+                      type="button"
+                      onClick={() => onMontoReferencia(op)}
+                      className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                        montoReferencia === op
+                          ? 'bg-accent text-white'
+                          : op < total
+                            ? 'bg-card text-muted'
+                            : 'bg-card text-ink'
+                      }`}
+                    >
+                      ${op}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="mt-2 flex items-center gap-2">
+                <label htmlFor="monto-pago" className="shrink-0 text-xs font-medium text-muted">
+                  Otro
+                </label>
+                <input
+                  id="monto-pago"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={montoReferencia ?? ''}
+                  onChange={(e) => onMontoReferencia(e.target.value === '' ? null : Number(e.target.value))}
+                  placeholder="Escribe la cantidad…"
+                  className="w-full rounded-lg bg-card px-3 py-1.5 text-sm text-ink outline-none placeholder:text-muted/60"
+                />
               </div>
-            )}
-            <label htmlFor="monto-pago" className="mt-2 mb-1 block text-xs font-medium text-muted">
-              Otro monto
-            </label>
-            <input
-              id="monto-pago"
-              type="number"
-              min="0"
-              step="0.01"
-              inputMode="decimal"
-              value={montoReferencia ?? ''}
-              onChange={(e) => onMontoReferencia(e.target.value === '' ? null : Number(e.target.value))}
-              placeholder="Escribe la cantidad…"
-              className="w-full rounded-xl bg-card px-3 py-2 text-sm text-ink outline-none placeholder:text-muted/60"
-            />
-            {montoReferencia != null && montoReferencia < total && (
-              <p className="mt-2 text-sm font-medium text-danger">El cliente paga menos que el total</p>
-            )}
-            {cambioALlevar != null && (
-              <div className="mt-2 flex items-center justify-between rounded-xl bg-card px-3 py-2">
-                <span className="text-sm font-medium text-ink">Cambio</span>
-                <span className="text-base font-bold text-ink">{formatearPrecio(cambioALlevar)}</span>
-              </div>
-            )}
-          </div>
-        )}
+              {montoReferencia != null && montoReferencia < total && (
+                <p className="mt-1.5 text-xs font-medium text-danger">El cliente paga menos que el total</p>
+              )}
+              {cambioALlevar != null && (
+                <div className="mt-2 flex items-center justify-between rounded-lg bg-card px-3 py-1.5">
+                  <span className="text-sm font-medium text-ink">Cambio</span>
+                  <span className="text-base font-bold text-ink">{formatearPrecio(cambioALlevar)}</span>
+                </div>
+              )}
+            </div>
+          )}
 
-        <Button
-          type="button"
-          className="w-full"
-          onClick={onCobrar}
-          disabled={items.length === 0 || cobrando || !cajaAbierta || (requiereCambio && !cambioValido)}
-        >
-          {cobrando ? 'Cobrando…' : items.length === 0 ? 'Cobrar' : `Cobrar · ${formatearPrecio(total)}`}
-        </Button>
+          <Button
+            type="button"
+            className="w-full"
+            onClick={onCobrar}
+            disabled={items.length === 0 || cobrando || !cajaAbierta || (requiereCambio && !cambioValido)}
+          >
+            {cobrando ? 'Cobrando…' : items.length === 0 ? 'Cobrar' : `Cobrar · ${formatearPrecio(total)}`}
+          </Button>
+        </div>
       </div>
     </aside>
   )
