@@ -133,11 +133,6 @@ function EditarPedidoModal({ abierto, pedido, guardando, onClose, onEditar }) {
 
   const pedidosProductoActuales = pedido?.productos ?? []
 
-  const pedidoProductoConstructor = (ppId) => ({
-    pedidoProductoId: ppId,
-    regresaAInventario: true,
-  })
-
   const guardar = () => {
     setError('')
     if (agregar.length === 0 && aQuitar.length === 0) return setError('No hay cambios que guardar')
@@ -148,7 +143,10 @@ function EditarPedidoModal({ abierto, pedido, guardando, onClose, onEditar }) {
           ? { productoId: item.id, cantidad: item.cantidad, esMitadYMitad: true, sabor1ProductoId: item.sabor1ProductoId, sabor2ProductoId: item.sabor2ProductoId }
           : { productoId: item.id, cantidad: item.cantidad, modificadores: item.modificadores.map((m) => ({ modificadorId: m.modificadorId })) },
     )
-    const quitarProductos = aQuitar.map(pedidoProductoConstructor)
+    const quitarProductos = aQuitar.map((q) => ({
+      pedidoProductoId: q.pedidoProductoId,
+      regresaAInventario: q.regresaAInventario,
+    }))
     onEditar({ agregarProductos, quitarProductos })
   }
 
