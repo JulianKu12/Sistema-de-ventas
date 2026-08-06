@@ -73,6 +73,14 @@ async function sembrarDatosDemo() {
     })
   }
 
+  const crearModificadorPara = async (producto, nombre, tipo, ingredienteAfectado, dataExtra = {}) => {
+    const modificador = await crearModificador(nombre, tipo, ingredienteAfectado, dataExtra)
+    await prisma.producto_Modificador.create({
+      data: { productoId: producto.id, modificadorId: modificador.id },
+    })
+    return modificador
+  }
+
   const crearCombo = async (nombre, precioEspecial, items) => {
     const combo = await prisma.combo.create({ data: { nombre, precioEspecial, estado: 'Activo' } })
     await prisma.combo_Producto.createMany({
@@ -114,24 +122,22 @@ async function sembrarDatosDemo() {
   const refresco = await crearProductoReventa('Refresco lata', 15, 48)
   const agua = await crearProductoReventa('Agua', 10, 36)
 
-  const quesoExtra = await crearModificador('Agregar queso extra', 'Agregar', queso, {
-    cantidadExtra: 1,
-    costoAdicional: 5,
+  await crearModificadorPara(tacoHuevo, 'Agregar queso extra', 'Agregar', queso, { cantidadExtra: 1, costoAdicional: 5 })
+  await crearModificadorPara(tacoJamon, 'Agregar queso extra', 'Agregar', queso, { cantidadExtra: 1, costoAdicional: 5 })
+  await crearModificadorPara(burrito, 'Agregar queso extra', 'Agregar', queso, { cantidadExtra: 1, costoAdicional: 5 })
+  await crearModificadorPara(quesadilla, 'Agregar queso extra', 'Agregar', queso, { cantidadExtra: 1, costoAdicional: 5 })
+  await crearModificadorPara(torta, 'Agregar queso extra', 'Agregar', queso, { cantidadExtra: 1, costoAdicional: 5 })
+  await crearModificadorPara(burrito, 'Agregar jamón extra', 'Agregar', jamon, { cantidadExtra: 1, costoAdicional: 6 })
+  await crearModificadorPara(torta, 'Agregar jamón extra', 'Agregar', jamon, { cantidadExtra: 1, costoAdicional: 6 })
+  await crearModificadorPara(burrito, 'Quitar queso', 'Quitar', queso, { costoAdicional: -2 })
+  await crearModificadorPara(quesadilla, 'Quitar queso', 'Quitar', queso)
+  await crearModificadorPara(torta, 'Quitar queso', 'Quitar', queso)
+  await crearModificadorPara(torta, 'Quitar tomate', 'Quitar', tomate)
+  await crearModificadorPara(torta, 'Cambiar queso por jamón', 'Sustituir', queso, {
+    ingredienteSustitutoId: jamon.id,
+    cantidadExtra: 2,
+    costoAdicional: 4,
   })
-  const jamonExtra = await crearModificador('Agregar jamón extra', 'Agregar', jamon, {
-    cantidadExtra: 1,
-    costoAdicional: 6,
-  })
-  const quitarQueso = await crearModificador('Quitar queso', 'Quitar', queso)
-  const quitarTomate = await crearModificador('Quitar tomate', 'Quitar', tomate)
-
-  const asociarModificador = async (producto, modificador) =>
-    prisma.producto_Modificador.create({ data: { productoId: producto.id, modificadorId: modificador.id } })
-
-  for (const p of [tacoHuevo, tacoJamon, burrito, quesadilla, torta]) await asociarModificador(p, quesoExtra)
-  for (const p of [burrito, torta]) await asociarModificador(p, jamonExtra)
-  for (const p of [burrito, quesadilla, torta]) await asociarModificador(p, quitarQueso)
-  await asociarModificador(torta, quitarTomate)
 
   await crearCombo('Combo taco + refresco', 20, [
     { producto: tacoHuevo, cantidad: 1 },

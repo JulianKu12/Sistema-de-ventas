@@ -65,8 +65,11 @@ function aplicarModificadores(basePorUnidad, modificadoresDetallados) {
       if (m.ingredienteSustitutoId == null) {
         throw new HttpError(400, `El modificador ${m.nombre} (Sustituir) requiere ingredienteSustitutoId`)
       }
+      const cantidadSustituto =
+        m.cantidadExtra ??
+        (basePorUnidad.find((b) => b.ingredienteId === m.ingredienteAfectadoId)?.cantidad || 0)
       mapa.delete(m.ingredienteAfectadoId)
-      mapa.set(m.ingredienteSustitutoId, (mapa.get(m.ingredienteSustitutoId) || 0) + (basePorUnidad.find((b) => b.ingredienteId === m.ingredienteAfectadoId)?.cantidad || 0))
+      mapa.set(m.ingredienteSustitutoId, (mapa.get(m.ingredienteSustitutoId) || 0) + cantidadSustituto)
     }
     registros.push({ modificadorId: m.id, costoAplicado: m.costoAplicado ?? m.costoAdicional })
   }

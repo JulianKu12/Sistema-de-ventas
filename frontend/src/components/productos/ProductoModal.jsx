@@ -3,6 +3,7 @@ import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Modal from '../ui/Modal'
 import Switch from '../ui/Switch'
+import ModificadorEditor from './ModificadorEditor'
 
 let contadorUid = 0
 
@@ -86,6 +87,18 @@ function ProductoModal({ abierto, producto, ingredientes, guardando, onClose, on
       cantidad: pi.cantidad.toString(),
     })),
   )
+  const [modificadores, setModificadores] = useState(() =>
+    (producto?.productoModificadores ?? []).map((pm) => ({
+      uid: ++contadorUid,
+      id: pm.modificador.id,
+      nombre: pm.modificador.nombre ?? '',
+      tipo: pm.modificador.tipo ?? 'Agregar',
+      afectadoId: pm.modificador.ingredienteAfectadoId?.toString() ?? '',
+      sustitutoId: pm.modificador.ingredienteSustitutoId?.toString() ?? '',
+      cantidad: pm.modificador.cantidadExtra?.toString() ?? '',
+      costo: pm.modificador.costoAdicional?.toString() ?? '',
+    })),
+  )
   const [error, setError] = useState('')
 
   const actualizarFila = (uid, cambios) =>
@@ -110,6 +123,46 @@ function ProductoModal({ abierto, producto, ingredientes, guardando, onClose, on
         return setError('Las cantidades de la receta deben ser mayores a 0')
       }
       datos.ingredientes = filasValidas
+
+      const modificadoresValidos = modificadores
+        .filter((m) => m.nombre.trim() !== '' || m.afectadoId !== '')
+        .map((m) => {
+          const base = {
+            ...(m.id ? { id: m.id } : {}),
+            nombre: m.nombre.trim(),
+            tipo: m.tipo,
+            ingredienteAfectadoId: Number(m.afectadoId),
+            costoAdicional: m.costo.trim() === '' ? 0 : Number(m.costo),
+          }
+          if (m.tipo === 'Agregar' || m.tipo === 'Sustituir') base.cantidadExtra = Number(m.cantidad)
+          else base.cantidadExtra = null
+          if (m.tipo === 'Sustituir') base.ingredienteSustitutoId = Number(m.sustitutoId)
+          else base.ingredienteSustitutoId = null
+          return base
+        })
+      if (modificadoresValidos.some((m) => !m.nombre)) return setError('Todos los modificadores requieren nombre')
+      if (modificadoresValidos.some((m) => !Number.isFinite(m.ingredienteAfectadoId))) {
+        return setError('Todos los modificadores requieren ingrediente afectado')
+      }
+      if (
+        modificadoresValidos.some(
+          (m) => (m.tipo === 'Agregar' || m.tipo === 'Sustituir') && (!Number.isFinite(m.cantidadExtra) || m.cantidadExtra <= 0),
+        )
+      ) {
+        return setError('Las cantidades de los modificadores deben ser mayores a 0')
+      }
+      if (modificadoresValidos.some((m) => m.tipo === 'Sustituir' && !Number.isFinite(m.ingredienteSustitutoId))) {
+        return setError('Los modificadores de tipo Sustituir requieren ingrediente sustituto')
+      }
+      if (
+        modificadoresValidos.some((m) => m.tipo === 'Sustituir' && m.ingredienteSustitutoId === m.ingredienteAfectadoId)
+      ) {
+        return setError('El ingrediente sustituto no puede ser igual al afectado')
+      }
+      if (modificadoresValidos.some((m) => !Number.isFinite(m.costoAdicional))) {
+        return setError('El costo de los modificadores no es válido')
+      }
+      datos.modificadores = modificadoresValidos
     }
 
     if (esEdicion) {
@@ -208,6 +261,12 @@ function ProductoModal({ abierto, producto, ingredientes, guardando, onClose, on
                 + Agregar ingrediente
               </Button>
             </div>
+
+            <ModificadorEditor
+              modificadores={modificadores}
+              setModificadores={setModificadores}
+              ingredientes={ingredientes}
+            />
 
             <Switch
               checked={permiteMitad}

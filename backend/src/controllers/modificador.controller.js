@@ -9,7 +9,7 @@ const includeCompleto = {
   productoModificadores: { include: { producto: { select: { id: true, nombre: true } } } },
 }
 
-async function validarDatos({ tipo, ingredienteAfectadoId, ingredienteSustitutoId, cantidadExtra, costoAdicional }) {
+export async function validarDatos({ tipo, ingredienteAfectadoId, ingredienteSustitutoId, cantidadExtra, costoAdicional }) {
   if (tipo !== undefined && !esEnumValido(tipo, TIPOS_MODIFICADOR)) throw new HttpError(400, 'tipo inválido')
 
   let afectadoId = ingredienteAfectadoId
@@ -31,7 +31,18 @@ async function validarDatos({ tipo, ingredienteAfectadoId, ingredienteSustitutoI
   if (tipo !== undefined) data.tipo = tipo
   if (afectadoId !== undefined) data.ingredienteAfectadoId = afectadoId
   if (sustitutoId !== undefined) data.ingredienteSustitutoId = sustitutoId
-  if (cantidadExtra !== undefined) data.cantidadExtra = tipo === 'Agregar' ? cantidadExtra : null
+
+  if (tipo === 'Agregar' || tipo === 'Sustituir') {
+    if (cantidadExtra === undefined || cantidadExtra === null) {
+      throw new HttpError(400, 'Un modificador de tipo Agregar o Sustituir requiere cantidadExtra')
+    }
+    const cantidad = Number(cantidadExtra)
+    if (!Number.isFinite(cantidad) || cantidad <= 0) throw new HttpError(400, 'cantidadExtra debe ser mayor a 0')
+    data.cantidadExtra = cantidad
+  } else if (cantidadExtra !== undefined) {
+    data.cantidadExtra = null
+  }
+
   if (costoAdicional !== undefined) data.costoAdicional = costoAdicional
   return data
 }

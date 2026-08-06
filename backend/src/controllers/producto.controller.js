@@ -2,6 +2,7 @@ import prisma from '../models/prisma.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { HttpError } from '../utils/httpError.js'
 import { TIPOS_PRODUCTO, esEnumValido } from '../utils/enums.js'
+import { validarDatos as validarDatosModificador } from './modificador.controller.js'
 
 const includeCompleto = {
   productoIngredientes: { include: { ingrediente: true } },
@@ -27,6 +28,18 @@ async function validarReceta(ingredientes) {
     receta.push({ ingredienteId: ingrediente.id, cantidad: item.cantidad })
   }
   return receta
+}
+
+async function validarModificadores(modificadores) {
+  const validados = []
+  for (const m of modificadores) {
+    if (!m?.nombre || typeof m.nombre !== 'string' || !m.nombre.trim()) {
+      throw new HttpError(400, 'Cada modificador requiere un nombre')
+    }
+    const data = await validarDatosModificador(m)
+    validados.push({ nombre: m.nombre.trim(), data })
+  }
+  return validados
 }
 
 export const listar = asyncHandler(async (req, res) => {
@@ -57,7 +70,7 @@ export const obtener = asyncHandler(async (req, res) => {
 })
 
 export const crear = asyncHandler(async (req, res) => {
-  const { nombre, precio, tipo, permiteMitadYMitad, disponibleHoy, ingredientes } = req.body
+  const { nombre, precio, tipo, permiteMitadYMitad, disponibleHoy, ingredientes, modificadores } = req.body
   if (!nombre || typeof nombre !== 'string') throw new HttpError(400, 'El campo nombre es obligatorio')
   if (typeof precio !== 'number') throw new HttpError(400, 'El campo precio debe ser numérico')
   if (!esEnumValido(tipo, TIPOS_PRODUCTO)) throw new HttpError(400, 'tipo inválido')
@@ -72,6 +85,14 @@ export const crear = asyncHandler(async (req, res) => {
     if (permiteMitadYMitad === true) {
       throw new HttpError(400, 'permiteMitadYMitad solo aplica a productos con receta')
     }
+  }
+
+  let modificadoresValidados = null
+  if (Array.isArray(modificadores) && modificadores.length > 0) {
+    if (tipo === 'Reventa_directa') {
+      throw new HttpError(400, 'Un producto de reventa directa no admite modificadores')
+    }
+    modificadoresValidados = await validarModificadores(modificadores)
   }
 
   const creado = await prisma.$transaction(async (tx) => {
@@ -89,6 +110,12 @@ export const crear = asyncHandler(async (req, res) => {
         data: receta.map((r) => ({ productoId: nuevo.id, ingredienteId: r.ingredienteId, cantidad: r.cantidad })),
       })
     }
+    if (modificadoresValidados) {
+      for (const v of modificadoresValidados) {
+        const mod = await tx.modificador.create({ data: { ...v.data, nombre: v.nombre } })
+        await tx.producto_Modificador.create({ data: { productoId: nuevo.id, modificadorId: mod.id } })
+      }
+    }
     return nuevo
   })
 
@@ -100,7 +127,7 @@ export const actualizar = asyncHandler(async (req, res) => {
   const producto = await prisma.producto.findUnique({ where: { id: Number(id) } })
   if (!producto) throw new HttpError(404, 'Producto no encontrado')
 
-  const { nombre, precio, permiteMitadYMitad, ingredientes } = req.body
+  const { nombre, precio, permiteMitadYMitad, ingredientes, modificadores } = req.body
   const data = {}
   if (nombre !== undefined) {
     if (typeof nombre !== 'string' || !nombre.trim()) throw new HttpError(400, 'nombre inválido')
@@ -125,6 +152,14 @@ export const actualizar = asyncHandler(async (req, res) => {
     receta = await validarReceta(ingredientes)
   }
 
+  let modificadoresValidados = null
+  if (modificadores !== undefined) {
+    if (producto.tipo === 'Reventa_directa' && modificadores.length > 0) {
+      throw new HttpError(400, 'Un producto de reventa directa no admite modificadores')
+    }
+    modificadoresValidados = await validarModificadores(modificadores)
+  }
+
   const actualizado = await prisma.$transaction(async (tx) => {
     const upd = await tx.producto.update({ where: { id: producto.id }, data })
     if (receta) {
@@ -133,6 +168,44 @@ export const actualizar = asyncHandler(async (req, res) => {
         data: receta.map((r) => ({ productoId: producto.id, ingredienteId: r.ingredienteId, cantidad: r.cantidad })),
       })
     }
+
+    if (modificadoresValidados !== null) {
+      const asociaciones = await tx.producto_Modificador.findMany({ where: { productoId: producto.id } })
+      const actualesIds = new Set(asociaciones.map((a) => a.modificadorId))
+      const deseadosIds = []
+
+      for (let indice = 0; indice < modificadores.length; indice++) {
+        const m = modificadores[indice]
+        const datoValido = modificadoresValidados[indice]
+        if (m.id != null) {
+          const mid = Number(m.id)
+          if (!actualesIds.has(mid)) throw new HttpError(400, `El modificador ${mid} no pertenece a este producto`)
+          const usos = await tx.producto_Modificador.count({ where: { modificadorId: mid } })
+          if (usos > 1) {
+            const copia = await tx.modificador.create({ data: { ...datoValido.data, nombre: datoValido.nombre } })
+            await tx.producto_Modificador.create({ data: { productoId: producto.id, modificadorId: copia.id } })
+            await tx.producto_Modificador.deleteMany({ where: { productoId: producto.id, modificadorId: mid } })
+            deseadosIds.push(copia.id)
+            await limpiarModificadorHuérfano(tx, mid)
+          } else {
+            await tx.modificador.update({ where: { id: mid }, data: datoValido.data })
+            deseadosIds.push(mid)
+          }
+        } else {
+          const mod = await tx.modificador.create({ data: { ...datoValido.data, nombre: datoValido.nombre } })
+          await tx.producto_Modificador.create({ data: { productoId: producto.id, modificadorId: mod.id } })
+          deseadosIds.push(mod.id)
+        }
+      }
+
+      for (const a of asociaciones) {
+        if (!deseadosIds.includes(a.modificadorId)) {
+          await tx.producto_Modificador.deleteMany({ where: { productoId: producto.id, modificadorId: a.modificadorId } })
+          await limpiarModificadorHuérfano(tx, a.modificadorId)
+        }
+      }
+    }
+
     return upd
   })
 
@@ -155,6 +228,17 @@ export const actualizar = asyncHandler(async (req, res) => {
     ...(aviso ? { aviso } : {}),
   })
 })
+
+async function limpiarModificadorHuérfano(tx, modificadorId) {
+  const restantes = await tx.producto_Modificador.count({ where: { modificadorId } })
+  if (restantes > 0) return
+  const enVentas = await tx.venta_Producto_Modificador.count({ where: { modificadorId } })
+  if (enVentas === 0) {
+    await tx.modificador.delete({ where: { id: modificadorId } })
+  } else {
+    await tx.modificador.update({ where: { id: modificadorId }, data: { estado: 'Inactivo' } })
+  }
+}
 
 export const actualizarDisponibilidad = asyncHandler(async (req, res) => {
   const { id } = req.params

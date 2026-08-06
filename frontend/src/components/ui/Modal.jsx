@@ -20,7 +20,7 @@ function Modal({ open, onClose, title, children, footer }) {
       aria-modal="true"
     >
       <div
-        className="w-full max-w-md rounded-3xl bg-card p-6 shadow-card"
+        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-3xl bg-card p-6 shadow-card"
         onClick={(e) => e.stopPropagation()}
       >
         {title && <h2 className="mb-4 text-xl font-bold text-ink">{title}</h2>}

@@ -1,4 +1,4 @@
-function Input({ label, className = '', rightElement, id, ...props }) {
+function Input({ label, className = '', rightElement, id, hint, ...props }) {
   return (
     <div>
       {label && (
@@ -14,6 +14,7 @@ function Input({ label, className = '', rightElement, id, ...props }) {
         />
         {rightElement}
       </div>
+      {hint && <p className="mt-1.5 text-xs text-muted">{hint}</p>}
     </div>
   )
 }
