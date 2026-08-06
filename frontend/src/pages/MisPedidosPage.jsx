@@ -12,6 +12,12 @@ const COLOR_ESTADO = {
   Cancelado: 'bg-danger/10 text-danger',
 }
 
+function radioClase(activo) {
+  return `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm cursor-pointer ${
+    activo ? 'bg-accent/10 font-semibold text-ink ring-1 ring-accent/40' : 'bg-input text-muted'
+  }`
+}
+
 function nombreProducto(p) {
   if (p.producto) return p.producto.nombre
   if (p.combo) return p.combo.nombre
@@ -29,7 +35,8 @@ function MisPedidosPage({ repartidorId }) {
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
   const [entregar, setEntregar] = useState(null)
-  const [noCobrar, setNoCobrar] = useState(false)
+  const [cobro, setCobro] = useState('pendiente')
+  const [metodoPago, setMetodoPago] = useState('Efectivo')
   const [guardando, setGuardando] = useState(false)
 
   const manejarError = useCallback(
@@ -66,10 +73,18 @@ function MisPedidosPage({ repartidorId }) {
     setGuardando(true)
     setError('')
     try {
-      await cambiarEstadoPreparacion(entregar.id, { estadoPreparacion: 'Entregado', ...(noCobrar ? { noCobrar: true } : {}) })
+      const datos = { estadoPreparacion: 'Entregado' }
+      if (cobro === 'noCobrar') datos.noCobrar = true
+      if (cobro === 'pagado') {
+        datos.estadoPago = 'Pagado'
+        datos.metodoPago = metodoPago
+      }
+      await cambiarEstadoPreparacion(entregar.id, datos)
       setEntregar(null)
-      setNoCobrar(false)
-      setToast(`Pedido #${entregar.id} entregado${noCobrar ? ' (No cobrar)' : ''}`)
+      setCobro('pendiente')
+      setMetodoPago('Efectivo')
+      const etiqueta = cobro === 'noCobrar' ? ' (No cobrar)' : cobro === 'pagado' ? ' (pagado)' : ' (pendiente de pago)'
+      setToast(`Pedido #${entregar.id} entregado${etiqueta}`)
       cargar()
     } catch (err) {
       manejarError(err)
@@ -140,7 +155,7 @@ function MisPedidosPage({ repartidorId }) {
                   )}
 
                   {pedido.estadoPreparacion === 'Enviado' && (
-                    <Button size="md" className="mt-4" onClick={() => { setEntregar(pedido); setNoCobrar(false) }}>
+                    <Button size="md" className="mt-4" onClick={() => { setEntregar(pedido); setCobro('pendiente'); setMetodoPago('Efectivo') }}>
                       Marcar entregado
                     </Button>
                   )}
@@ -164,10 +179,37 @@ function MisPedidosPage({ repartidorId }) {
               Total: <span className="font-bold text-ink">{formatearPrecio(entregar.total)}</span>. Confirma que entregaste el pedido al cliente.
             </p>
             {entregar.estadoPago !== 'Pagado' && (
-              <label className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-input px-4 py-3">
-                <span className="text-sm text-ink">Marcar como No cobrar (consumo interno)</span>
-                <input type="checkbox" checked={noCobrar} onChange={(e) => setNoCobrar(e.target.checked)} className="h-5 w-5 accent-accent" />
-              </label>
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">Estado de cobro</p>
+                <label className={radioClase(cobro === 'pendiente')}>
+                  <input type="radio" name="cobro" checked={cobro === 'pendiente'} onChange={() => setCobro('pendiente')} className="h-4 w-4 accent-accent" />
+                  <span>Pendiente de pago</span>
+                </label>
+                <label className={radioClase(cobro === 'pagado')}>
+                  <input type="radio" name="cobro" checked={cobro === 'pagado'} onChange={() => setCobro('pagado')} className="h-4 w-4 accent-accent" />
+                  <span>Cobrar en entrega (queda pagado)</span>
+                </label>
+                {cobro === 'pagado' && (
+                  <div className="flex gap-2 pl-7">
+                    {['Efectivo', 'Transferencia', 'Otro'].map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setMetodoPago(m)}
+                        className={`rounded-xl px-3 py-1.5 text-sm font-semibold ${
+                          metodoPago === m ? 'bg-accent text-white' : 'bg-input text-muted'
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <label className={radioClase(cobro === 'noCobrar')}>
+                  <input type="radio" name="cobro" checked={cobro === 'noCobrar'} onChange={() => setCobro('noCobrar')} className="h-4 w-4 accent-accent" />
+                  <span>No cobrar (consumo interno)</span>
+                </label>
+              </div>
             )}
             <div className="mt-6 flex justify-end gap-3">
               <Button variant="secondary" size="md" onClick={() => setEntregar(null)} disabled={guardando}>Cancelar</Button>

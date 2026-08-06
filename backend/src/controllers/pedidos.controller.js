@@ -359,6 +359,49 @@ export const pedidosPorRepartidor = asyncHandler(async (req, res) => {
 })
 
 // Pasa un pedido Pendiente_pago a Pagado, generando automáticamente la Venta.
+// Registra el pago de un pedido: genera la Venta y pasa estado_pago a Pagado.
+// Compartida por el Administrador ("Marcar pagado") y por el Repartidor al
+// entregar con cobro en sitio.
+async function registrarPagoPedido(tx, pedido, { metodoPago, usarDisponible, usuarioId }) {
+  if (pedido.estadoPago === 'Pagado') {
+    throw new HttpError(400, 'El pedido ya está Pagado')
+  }
+  if (pedido.estadoPreparacion === 'Cancelado') {
+    throw new HttpError(400, 'Un pedido Cancelado no puede pasar a Pagado')
+  }
+
+  const dia = await tx.dia_Operativo.findFirst({ where: { estado: 'Abierto' } })
+  if (!dia) {
+    throw new HttpError(409, 'No hay una caja abierta (Dia_Operativo Abierto). Abre la caja para registrar el pago.')
+  }
+
+  const r = await ejecutarVenta(tx, {
+    productos: await productosDesdePedido(tx, pedido),
+    metodoPago: pedido.noCobrar ? 'Efectivo' : metodoPago ?? 'Efectivo',
+    noCobrar: pedido.noCobrar,
+    pedidoId: pedido.id,
+    costoEnvio: pedido.costoEnvio ?? 0,
+    usarDisponible,
+    usuarioId,
+    diaOperativoId: dia.id,
+  })
+  if (r.conflicto) {
+    const e = new HttpError(409, `No se pudo registrar el pago: ${r.mensaje}`)
+    e.faltantes = r.faltantes
+    throw e
+  }
+
+  const actualizado = await tx.pedido.update({
+    where: { id: pedido.id },
+    data: { estadoPago: 'Pagado' },
+  })
+  return {
+    pedido: await tx.pedido.findUnique({ where: { id: pedido.id }, include: includePedido }),
+    venta: r.venta,
+    actualizado,
+  }
+}
+
 export const cambiarEstadoPago = asyncHandler(async (req, res) => {
   const { id } = req.params
   const { estadoPago, usarDisponible } = req.body
@@ -374,43 +417,11 @@ export const cambiarEstadoPago = asyncHandler(async (req, res) => {
       include: { productos: { include: { mitadYMitad: true, modificadores: true } } },
     })
     if (!pedido) throw new HttpError(404, 'Pedido no encontrado')
-    if (pedido.estadoPago === 'Pagado') {
-      throw new HttpError(400, 'El pedido ya está Pagado')
-    }
-    if (pedido.estadoPreparacion === 'Cancelado') {
-      throw new HttpError(400, 'Un pedido Cancelado no puede pasar a Pagado')
-    }
-
-    const dia = await tx.dia_Operativo.findFirst({ where: { estado: 'Abierto' } })
-    if (!dia) {
-      throw new HttpError(409, 'No hay una caja abierta (Dia_Operativo Abierto). Abre la caja para registrar el pago.')
-    }
-
-    const r = await ejecutarVenta(tx, {
-      productos: await productosDesdePedido(tx, pedido),
-      metodoPago: pedido.noCobrar ? 'Efectivo' : pedido.metodoPago,
-      noCobrar: pedido.noCobrar,
-      pedidoId: pedido.id,
-      costoEnvio: pedido.costoEnvio ?? 0,
+    return registrarPagoPedido(tx, pedido, {
+      metodoPago: pedido.metodoPago ?? 'Efectivo',
       usarDisponible,
       usuarioId,
-      diaOperativoId: dia.id,
     })
-    if (r.conflicto) {
-      const e = new HttpError(409, `No se pudo registrar el pago: ${r.mensaje}`)
-      e.faltantes = r.faltantes
-      throw e
-    }
-
-    const actualizado = await tx.pedido.update({
-      where: { id: pedido.id },
-      data: { estadoPago: 'Pagado' },
-    })
-    return {
-      pedido: await tx.pedido.findUnique({ where: { id: pedido.id }, include: includePedido }),
-      venta: r.venta,
-      actualizado,
-    }
   })
 
   res.json({
@@ -465,7 +476,7 @@ async function regresarInventarioDePedido(tx, pedido) {
 
 export const cambiarEstadoPreparacion = asyncHandler(async (req, res) => {
   const { id } = req.params
-  const { estadoPreparacion, repartidorId, regresaAInventario, noCobrar } = req.body
+  const { estadoPreparacion, repartidorId, regresaAInventario, noCobrar, estadoPago, metodoPago } = req.body
 
   if (!esEnumValido(estadoPreparacion, ESTADOS_PREPARACION)) {
     throw new HttpError(400, 'estadoPreparacion inválido')
@@ -565,6 +576,21 @@ export const cambiarEstadoPreparacion = asyncHandler(async (req, res) => {
       data.estadoPago = 'Pagado'
     }
 
+    // Repartidor cobra al entregar (docs/07): marcar Entregado con
+    // estado_pago='Pagado' genera la Venta con el medio de pago elegido en el
+    // momento, sin que el Administrador tenga que marcarla aparte después.
+    if (estadoPreparacion === 'Entregado' && estadoPago === 'Pagado' && noCobrar !== true) {
+      if (pedido.ventaId) {
+        throw new HttpError(400, 'El pedido ya tiene una Venta generada; no se puede cobrar de nuevo')
+      }
+      const pago = await registrarPagoPedido(tx, pedido, {
+        metodoPago,
+        usuarioId,
+      })
+      venta = pago.venta
+      data.estadoPago = 'Pagado'
+    }
+
     await tx.pedido.update({ where: { id: pedido.id }, data })
     return {
       pedido: await tx.pedido.findUnique({ where: { id: pedido.id }, include: includePedido }),
@@ -578,7 +604,7 @@ export const cambiarEstadoPreparacion = asyncHandler(async (req, res) => {
     pedido: resultado.pedido,
     movimientosCancelacionRegreso: resultado.movimientosRegreso,
     ...(resultado.venta
-      ? { mensajeVenta: 'Venta generada como "No cobrar" automáticamente al marcar Entregado.', venta: resultado.venta }
+      ? { mensajeVenta: 'Venta generada al marcar Entregado.', venta: resultado.venta }
       : {}),
   })
 })
