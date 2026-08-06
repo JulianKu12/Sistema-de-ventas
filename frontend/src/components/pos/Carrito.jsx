@@ -29,7 +29,7 @@ function ControlesCantidad({ cantidad, onIncrement, onDecrement }) {
 }
 
 function ItemCarrito({ item, onIncrement, onDecrement, onRemove }) {
-  const costoMods = item.modificadores.reduce((acc, m) => acc + m.costoAplicado, 0)
+  const costoMods = (item.modificadores ?? []).reduce((acc, m) => acc + m.costoAplicado, 0)
   const precioUnidad = item.precioUnitario + costoMods
   return (
     <li className="flex flex-col gap-2 rounded-2xl bg-surface px-4 py-3">
@@ -51,7 +51,7 @@ function ItemCarrito({ item, onIncrement, onDecrement, onRemove }) {
           {item.subnombre && (
             <p className="mt-0.5 text-xs font-medium text-ink">{item.subnombre}</p>
           )}
-          {item.modificadores.length > 0 && (
+          {(item.modificadores ?? []).length > 0 && (
             <p className="mt-0.5 text-xs text-muted">
               {item.modificadores.map((m) => m.nombre).join(' · ')}
             </p>

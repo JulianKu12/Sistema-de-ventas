@@ -34,6 +34,7 @@ function ComboModal({ open, combo, onClose, onConfirm }) {
       nombre: combo.nombre,
       precioUnitario: combo.precioEspecial,
       cantidad: 1,
+      modificadores: [],
       esCombo: true,
       productos: productos.map((cp) => ({
         productoId: cp.producto.id,

@@ -112,7 +112,7 @@ function PuntoVentaPage() {
   }, [productos, buscar])
 
   const totalCarrito = carrito.reduce(
-    (acc, item) => acc + (item.precioUnitario + item.modificadores.reduce((a, m) => a + m.costoAplicado, 0)) * item.cantidad,
+    (acc, item) => acc + (item.precioUnitario + (item.modificadores ?? []).reduce((a, m) => a + m.costoAplicado, 0)) * item.cantidad,
     0,
   )
 
@@ -243,7 +243,7 @@ function PuntoVentaPage() {
           : {
               productoId: item.id,
               cantidad: item.cantidad,
-              modificadores: item.modificadores.map((m) => ({ modificadorId: m.modificadorId })),
+              modificadores: (item.modificadores ?? []).map((m) => ({ modificadorId: m.modificadorId })),
             },
     ),
     metodoPago,

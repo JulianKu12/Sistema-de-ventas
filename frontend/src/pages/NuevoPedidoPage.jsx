@@ -28,7 +28,7 @@ function FilaItem({ it, onCambiar, onQuitar }) {
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-ink">{it.nombre}</p>
         {it.subnombre && <p className="text-xs font-medium text-ink">{it.subnombre}</p>}
-        {it.modificadores.length > 0 && (
+        {it.modificadores?.length > 0 && (
           <p className="text-xs text-muted">{it.modificadores.map((m) => m.nombre).join(' · ')}</p>
         )}
         {it.esCombo && it.productos?.some((p) => p.modificadores?.length > 0) && (
@@ -145,7 +145,7 @@ function NuevoPedidoPage() {
   const costoEnvioAplicado = tipo === 'A_domicilio' && !noCobrar ? costoEnvio : 0
   const totalCarrito = useMemo(() => {
     const sub = carrito.reduce(
-      (acc, item) => acc + (item.precioUnitario + item.modificadores.reduce((a, m) => a + m.costoAplicado, 0)) * item.cantidad,
+      (acc, item) => acc + (item.precioUnitario + (item.modificadores ?? []).reduce((a, m) => a + m.costoAplicado, 0)) * item.cantidad,
       0,
     )
     return sub + costoEnvioAplicado
@@ -232,7 +232,7 @@ function NuevoPedidoPage() {
           }
         : item.esMitadYMitad
           ? { productoId: item.id, cantidad: item.cantidad, esMitadYMitad: true, sabor1ProductoId: item.sabor1ProductoId, sabor2ProductoId: item.sabor2ProductoId }
-          : { productoId: item.id, cantidad: item.cantidad, modificadores: item.modificadores.map((m) => ({ modificadorId: m.modificadorId })) },
+          : { productoId: item.id, cantidad: item.cantidad, modificadores: (item.modificadores ?? []).map((m) => ({ modificadorId: m.modificadorId })) },
     ),
     ...(clienteFinalId != null ? { clienteId: clienteFinalId } : {}),
     ...(clienteFinalId == null && clienteNombre.trim() ? { nombreClienteLibre: clienteNombre.trim() } : {}),
