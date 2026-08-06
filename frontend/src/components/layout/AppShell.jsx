@@ -73,6 +73,23 @@ function IconoPedido() {
   )
 }
 
+function IconoRepartidor() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632ZM3 7.5h1.5l.75.75A1.5 1.5 0 0 0 6 8.694h.75m-1.5 0V6.75h11.25" />
+    </svg>
+  )
+}
+
+function IconoConfig() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <path d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.512.966.231 1.44l-.4.61c-.225.43-.111.95.227 1.3.34.351.849.383 1.136.084l.384-.399a1.125 1.125 0 0 1 1.422-.109l1.018.686c.42.282.611.8.41 1.313l-.287.755c-.188.47-.611.86-1.11.86h-1.07c-.56 0-1.03.398-1.12.94-.09.542.06 1.085.02 1.29-.4 2.398-1.21 4.917-2.92 6.66" />
+      <path d="M11 6a5.25 5.25 0 1 0 5.25 5.25H14A3 3 0 0 1 11 8.25V6Z" />
+    </svg>
+  )
+}
+
 const items = [
   { to: '/', end: true, etiqueta: 'Pedidos', icono: <IconoPedido /> },
   { to: '/punto-venta', etiqueta: 'Venta rápida', icono: <IconoVenta /> },
@@ -83,6 +100,8 @@ const items = [
   { to: '/devoluciones', etiqueta: 'Devoluciones', icono: <IconoDevolucion /> },
   { to: '/gastos', etiqueta: 'Gastos', icono: <IconoGasto /> },
   { to: '/caja', etiqueta: 'Caja', icono: <IconoCaja /> },
+  { to: '/repartidores', etiqueta: 'Repartidores', icono: <IconoRepartidor /> },
+  { to: '/configuracion', etiqueta: 'Configuración', icono: <IconoConfig /> },
 ]
 
 function AppShell() {

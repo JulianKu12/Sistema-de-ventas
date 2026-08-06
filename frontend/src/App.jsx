@@ -12,6 +12,8 @@ import CajaPage from './pages/CajaPage'
 import DevolucionesPage from './pages/DevolucionesPage'
 import PedidosPage from './pages/PedidosPage'
 import NuevoPedidoPage from './pages/NuevoPedidoPage'
+import RepartidoresPage from './pages/RepartidoresPage'
+import ConfiguracionPage from './pages/ConfiguracionPage'
 
 function RutaProtegida({ children }) {
   const { token } = useAuth()
@@ -42,6 +44,8 @@ function App() {
         <Route path="gastos" element={<GastosPage />} />
         <Route path="caja" element={<CajaPage />} />
         <Route path="devoluciones" element={<DevolucionesPage />} />
+        <Route path="repartidores" element={<RepartidoresPage />} />
+        <Route path="configuracion" element={<ConfiguracionPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
