@@ -16,3 +16,7 @@ export async function cambiarEstadoPreparacion(id, datos) {
 export async function cambiarEstadoPago(id, datos) {
   return api.patch(`/api/pedidos/${id}/estado-pago`, datos)
 }
+
+export async function editarPedido(id, datos) {
+  return api.patch(`/api/pedidos/${id}`, datos)
+}

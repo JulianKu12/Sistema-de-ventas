@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
-import { listarPedidos, cambiarEstadoPreparacion, cambiarEstadoPago } from '../services/pedidos'
+import { listarPedidos, cambiarEstadoPreparacion, cambiarEstadoPago, editarPedido } from '../services/pedidos'
 import { estadoConfig } from '../services/config'
 import { formatearPrecio, formatearFecha } from '../utils/formato'
 import Button from '../components/ui/Button'
 import EnviarPedidoModal from '../components/pedidos/EnviarPedidoModal'
 import CancelarPedidoModal from '../components/pedidos/CancelarPedidoModal'
+import EditarPedidoModal from '../components/pedidos/EditarPedidoModal'
 
 const TABS = [
   { clave: 'Todos', etiqueta: 'Todos' },
@@ -46,7 +47,7 @@ function FilaProducto({ p }) {
   )
 }
 
-function TarjetaPedido({ pedido, onAvanzar, onEnviar, onCancelar, onPagar }) {
+function TarjetaPedido({ pedido, onAvanzar, onEnviar, onCancelar, onPagar, onEditar }) {
   const puede =
     pedido.estadoPreparacion === 'Pendiente'
       ? ['En_preparacion', 'Entregado']
@@ -103,6 +104,9 @@ function TarjetaPedido({ pedido, onAvanzar, onEnviar, onCancelar, onPagar }) {
         {puedeEnviar && (
           <Button size="md" onClick={() => onEnviar(pedido)}>Enviar</Button>
         )}
+        {(pedido.estadoPreparacion === 'Pendiente' || pedido.estadoPreparacion === 'En_preparacion') && (
+          <Button size="md" variant="secondary" onClick={() => onEditar(pedido)}>Editar</Button>
+        )}
         {puede.includes('En_preparacion') && (
           <Button size="md" variant="secondary" onClick={() => onAvanzar(pedido, 'En_preparacion')}>En preparación</Button>
         )}
@@ -129,6 +133,7 @@ function PedidosPage() {
 
   const [modalEnviar, setModalEnviar] = useState(null)
   const [modalCancelar, setModalCancelar] = useState(null)
+  const [modalEditar, setModalEditar] = useState(null)
   const [guardando, setGuardando] = useState(false)
   const [pagarPedido, setPagarPedido] = useState(null)
 
@@ -196,6 +201,21 @@ function PedidosPage() {
     }
   }
 
+  const editar = async (pedido, cambios) => {
+    setGuardando(true)
+    setError('')
+    try {
+      await editarPedido(pedido.id, cambios)
+      setModalEditar(null)
+      setToast(`Pedido #${pedido.id} editado y total recalculado`)
+      cargar()
+    } catch (err) {
+      manejarError(err)
+    } finally {
+      setGuardando(false)
+    }
+  }
+
   const visibles = pedidos
 
   return (
@@ -245,6 +265,7 @@ function PedidosPage() {
                   onEnviar={(p) => setModalEnviar(p)}
                   onCancelar={(p) => setModalCancelar(p)}
                   onPagar={(p) => setPagarPedido(p)}
+                  onEditar={(p) => setModalEditar(p)}
                 />
               </li>
             ))}
@@ -269,6 +290,15 @@ function PedidosPage() {
           guardando={guardando}
           onClose={() => setModalCancelar(null)}
           onCancelar={(regresaAInventario) => avanzar(modalCancelar, 'Cancelado', { regresaAInventario })}
+        />
+      )}
+      {modalEditar && (
+        <EditarPedidoModal
+          abierto
+          pedido={modalEditar}
+          guardando={guardando}
+          onClose={() => setModalEditar(null)}
+          onEditar={(cambios) => editar(modalEditar, cambios)}
         />
       )}
       {pagarPedido && (
