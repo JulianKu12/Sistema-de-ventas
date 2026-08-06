@@ -1,9 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { iniciarSesion } from '../services/auth'
-import { AuthContext } from './authContext'
-
-const TOKEN_KEY = 'pos.token'
-const USUARIO_KEY = 'pos.usuario'
+import { AuthContext, TOKEN_KEY, USUARIO_KEY } from './authContext'
 
 function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))

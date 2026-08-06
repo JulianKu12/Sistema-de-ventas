@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/useAuth'
 import LoginPage from './pages/LoginPage'
-import WelcomePage from './pages/WelcomePage'
+import PuntoVentaPage from './pages/PuntoVentaPage'
 
 function RutaProtegida({ children }) {
   const { token } = useAuth()
@@ -17,7 +17,7 @@ function App() {
         path="/"
         element={
           <RutaProtegida>
-            <WelcomePage />
+            <PuntoVentaPage />
           </RutaProtegida>
         }
       />
