@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
 
@@ -117,10 +117,31 @@ const items = [
 function AppShell() {
   const { usuario, logout } = useAuth()
   const [abierto, setAbierto] = useState(true)
+  const [arrastre, setArrastre] = useState(null)
+
+  useEffect(() => {
+    if (!arrastre) return
+    const mover = (e) => {
+      const delta = arrastre.x - e.clientX
+      if (Math.abs(delta) > 28) {
+        setAbierto(delta > 0 ? false : true)
+        setArrastre(null)
+      }
+    }
+    const soltar = () => setArrastre(null)
+    window.addEventListener('pointermove', mover)
+    window.addEventListener('pointerup', soltar)
+    window.addEventListener('pointercancel', soltar)
+    return () => {
+      window.removeEventListener('pointermove', mover)
+      window.removeEventListener('pointerup', soltar)
+      window.removeEventListener('pointercancel', soltar)
+    }
+  }, [arrastre])
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <aside className={`flex shrink-0 flex-col border-r border-black/5 bg-card transition-[width] duration-200 ${abierto ? 'w-[260px]' : 'w-[80px]'}`}>
+      <aside className={`relative flex shrink-0 flex-col border-r border-black/5 bg-card transition-[width] duration-200 ${abierto ? 'w-[260px]' : 'w-[80px]'}`}>
         <div className={`flex items-center gap-3 px-5 py-5 ${abierto ? '' : 'justify-center px-2'}`}>
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-white">
             <IconoVenta />
@@ -170,20 +191,7 @@ function AppShell() {
         </nav>
 
         <div className="border-t border-black/5 p-3">
-          <button
-            type="button"
-            onClick={() => setAbierto((v) => !v)}
-            aria-label={abierto ? 'Contraer menú' : 'Expandir menú'}
-            className={`flex w-full items-center rounded-xl bg-input font-semibold text-ink transition active:scale-[0.97] active:bg-muted/20 ${
-              abierto ? 'gap-3 px-4 py-2.5 text-sm' : 'justify-center px-0 py-2.5'
-            }`}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0" aria-hidden="true">
-              <path d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" />
-            </svg>
-            {abierto && <span>Colapsar menú</span>}
-          </button>
-          <div className={abierto ? 'mt-3 px-1' : 'mt-3'}>
+          <div className={abierto ? 'px-1' : ''}>
             <p className={`mb-2 truncate text-sm font-medium text-ink ${abierto ? '' : 'text-center'}`} title={usuario?.nombre}>
               {usuario?.nombre}
             </p>
@@ -202,6 +210,36 @@ function AppShell() {
             </button>
           </div>
         </div>
+
+        <button
+          type="button"
+          onPointerDown={(e) => {
+            e.preventDefault()
+            setArrastre({ x: e.clientX })
+          }}
+          onDoubleClick={() => setAbierto((v) => !v)}
+          aria-label={abierto ? 'Contraer menú' : 'Expandir menú'}
+          className="group absolute right-0 top-1/2 z-20 -translate-y-1/2 translate-x-1/2"
+        >
+          <span
+            className={`flex h-24 w-[9px] items-center justify-center rounded-full shadow-card transition ${
+              abierto ? 'bg-warning/60 group-hover:bg-warning' : 'bg-accent/60 group-hover:bg-accent'
+            }`}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`h-3.5 w-3.5 text-white transition-transform duration-200 ${abierto ? '-rotate-90' : 'rotate-90'}`}
+              aria-hidden="true"
+            >
+              <path d="M4.5 12h15M13 5.5l6.5 6.5L13 18.5" />
+            </svg>
+          </span>
+        </button>
       </aside>
 
       <div className="flex-1 overflow-hidden">
